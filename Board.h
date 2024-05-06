@@ -1,11 +1,20 @@
 #pragma once
 #include "windows.h"
 #include "Cell.h"
+#include "ChessPiece.h"
+#include "Pawn.h"
+#include "Queen.h"
+#include "Rook.h"
+#include "Knight.h"
+#include "King.h"
+#include "Bishop.h"
 #include <vector>
 #include <iostream>
 #include <iomanip>
 
 using namespace std;
+
+const vector<ChessPiece> BACK_ROW = {Rook(), Knight(), Bishop(), Queen(), King(), Bishop(), Knight(), Rook()};
 
 class Board {
 private:
@@ -41,6 +50,14 @@ public:
 		height = h;
 		width = w;
 		brd = vector<Cell>(h * w);
+		for (int i = 0; i < w; i++) {
+			ChessPiece p = BACK_ROW.at(i);
+			Pawn pawn;
+			brd.at(i).setChessPiece(p);
+			brd.at((h * w - w) + i).setChessPiece(p);
+			brd.at(w + i).setChessPiece(pawn);
+			brd.at((h * (w - 2) + i)).setChessPiece(pawn);
+		}
 	}
 
 	void draw(bool rev) {
@@ -51,9 +68,9 @@ public:
 		for (int h = 0; h < height; h++) {
 			for (int w = 0; w < width; w++) {
 				Cell& c = brd.at(w + h * width);
-				cout << c.getChar() << " ";
+				wcout << c.getChar() << " ";
 			}
-			cout << endl;
+			wcout << endl;
 		}
 		if (!rev) {
 			brd.at(cursorPos).toggleCursor();

@@ -7,6 +7,8 @@
 #include <chrono>
 #include "windows.h"
 #include "Board.h"
+#include "fcntl.h"
+#include "io.h"
 using namespace std;
 
 const int BOARD_HEIGHT = 8;
@@ -14,13 +16,13 @@ const int BOARD_WIDTH = 8;
 
 int main() {
 	bool game_running = true;
-
-	Board myBoard(BOARD_HEIGHT, BOARD_WIDTH); //width, height, %of bombs (max 30% of total
+	_setmode(_fileno(stdout), _O_U16TEXT);
+	Board myBoard(BOARD_HEIGHT, BOARD_WIDTH);
 	system("cls");
 	do {
 
 		myBoard.draw(false);
-		this_thread::sleep_for(80ms); //wait for key
+		this_thread::sleep_for(80ms);
 		if (GetAsyncKeyState(VK_DOWN)) {
 			myBoard.moveCursor(0, -1);
 		}

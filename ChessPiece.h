@@ -3,17 +3,19 @@
 
 using namespace std;
 class ChessPiece {
-private:
-	char ch;
+protected:
+	wchar_t ch;
 	vector<int> validMoves;
 	vector<int> standardMoves; 
 public:
 	ChessPiece() {
-
+		ch = L'-';
 	}
-	char getChar() {
+	wchar_t getChar() {
 		return ch;
 	}
 
-	virtual void onCapture();
+	void onCapture() {
+		return;
+	}
 };

@@ -7,12 +7,11 @@ using namespace std;
 class Cell {
 private:
 	bool isCursor, isSelected;
-	ChessPiece* piece;
+	ChessPiece piece;
 public:
 	Cell() {
 		isCursor = false;
 		isSelected = false;
-		piece = nullptr;
 	}
 	void toggleSelected() {
 		isSelected = !isSelected;
@@ -22,16 +21,21 @@ public:
 		isCursor = !isCursor;
 	}
 
-	char getChar() {
-		char ch;
-		if (piece != nullptr) {
-			ch = piece->getChar();
-		}
-		else if (isCursor) {
+	void setChessPiece(ChessPiece& p) {
+		piece = p;
+	}
+
+	ChessPiece& getChessPiece() {
+		return piece;
+	}
+
+	wchar_t getChar() {
+		wchar_t ch;
+		if (isCursor) {
 			ch = 'x';
 		}
 		else {
-			ch = '|';
+			ch = piece.getChar();
 		}
 
 		return ch;
