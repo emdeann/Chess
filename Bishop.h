@@ -5,6 +5,6 @@ using namespace std;
 class Bishop : public ChessPiece {
 public:
 	Bishop() {
-		ch = L'\u2657';
+		ch = L"\u2657";
 	}
 };

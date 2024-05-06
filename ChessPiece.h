@@ -1,17 +1,17 @@
 #pragma once
 #include <vector>
-
+#include <string>
 using namespace std;
 class ChessPiece {
 protected:
-	wchar_t ch;
+	wstring ch;
 	vector<int> validMoves;
 	vector<int> standardMoves; 
 public:
 	ChessPiece() {
-		ch = L'-';
+		ch = L"-";
 	}
-	wchar_t getChar() {
+	wstring getChar() {
 		return ch;
 	}
 

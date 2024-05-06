@@ -5,6 +5,6 @@ using namespace std;
 class Rook : public ChessPiece {
 public:
 	Rook() {
-		ch = L'\u2656';
+		ch = L"\u2656";
 	}
 };

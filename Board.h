@@ -14,12 +14,15 @@
 
 using namespace std;
 
+const int NONE_SELECTED = -1;
+
 const vector<ChessPiece> BACK_ROW = {Rook(), Knight(), Bishop(), Queen(), King(), Bishop(), Knight(), Rook()};
 
 class Board {
 private:
 	int height, width, cursorPos;
 	vector<Cell> brd;
+	int selected;
 
 	void ShowConsoleCursor(bool showFlag)
 	{
@@ -50,6 +53,7 @@ public:
 		height = h;
 		width = w;
 		brd = vector<Cell>(h * w);
+		selected = -1;
 		for (int i = 0; i < w; i++) {
 			ChessPiece p = BACK_ROW.at(i);
 			Pawn pawn;
@@ -68,13 +72,29 @@ public:
 		for (int h = 0; h < height; h++) {
 			for (int w = 0; w < width; w++) {
 				Cell& c = brd.at(w + h * width);
-				wcout << c.getChar() << " ";
+				wcout << c.getStr() << " ";
 			}
 			wcout << endl;
 		}
 		if (!rev) {
 			brd.at(cursorPos).toggleCursor();
 		}
+	}
+
+	void onSpace() {
+		brd.at((selected == -1) ? cursorPos : selected).toggleSelected();
+		if (selected == NONE_SELECTED) {
+			selected = cursorPos;
+			
+		}
+		else if (cursorPos == selected) {
+			selected = NONE_SELECTED;
+		}
+		else {
+			brd.at(selected).movePiece(brd.at(cursorPos));
+			selected = NONE_SELECTED;
+		}
+		
 	}
 
 	void moveCursor(int x, int y) {

@@ -36,6 +36,7 @@ int main() {
 			myBoard.moveCursor(-1, 0);
 		}
 		else if (GetAsyncKeyState(VK_SPACE)) {
+			myBoard.onSpace();
 		}
 		else if (GetAsyncKeyState(VK_ESCAPE)) { //....TODO : Add case for pressing letter M for marking bombs
 			game_running = false;
