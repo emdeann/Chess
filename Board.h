@@ -8,6 +8,7 @@
 #include "Knight.h"
 #include "King.h"
 #include "Bishop.h"
+#include <set>
 #include <vector>
 #include <iostream>
 #include <iomanip>
@@ -23,6 +24,7 @@ private:
 	int height, width, cursorPos;
 	vector<Cell> brd;
 	int selected;
+	set<int> currentValidMoves;
 
 	void ShowConsoleCursor(bool showFlag)
 	{
@@ -58,8 +60,10 @@ public:
 			ChessPiece p = BACK_ROW.at(i);
 			Pawn pawn;
 			brd.at(i).setChessPiece(p);
+			p.switchSide();
 			brd.at((h * w - w) + i).setChessPiece(p);
 			brd.at(w + i).setChessPiece(pawn);
+			pawn.switchSide();
 			brd.at((h * (w - 2) + i)).setChessPiece(pawn);
 		}
 	}
@@ -82,19 +86,33 @@ public:
 	}
 
 	void onSpace() {
-		brd.at((selected == -1) ? cursorPos : selected).toggleSelected();
 		if (selected == NONE_SELECTED) {
-			selected = cursorPos;
+			ChessPiece& curPiece = brd.at(cursorPos).getChessPiece();
+			if (curPiece.isActive()) {
+				selected = cursorPos;
+				currentValidMoves = getPossibleMoves(selected, curPiece.getRange(), curPiece.getValidDirections());
+				toggleMoveHighlights();
+				brd.at(selected).toggleSelected();
+			}
 			
 		}
-		else if (cursorPos == selected) {
-			selected = NONE_SELECTED;
-		}
 		else {
-			brd.at(selected).movePiece(brd.at(cursorPos));
-			selected = NONE_SELECTED;
+			if (currentValidMoves.find(cursorPos) != currentValidMoves.end()) {
+				brd.at(selected).movePiece(brd.at(cursorPos));
+				brd.at(selected).toggleSelected();
+				selected = NONE_SELECTED;
+				toggleMoveHighlights();
+				currentValidMoves.clear();
+			}
+
 		}
 		
+	}
+
+	void toggleMoveHighlights() {
+		for (int i : currentValidMoves) {
+			brd.at(i).toggleHighlight();
+		}
 	}
 
 	void moveCursor(int x, int y) {
@@ -102,4 +120,37 @@ public:
 		newLoc = (newLoc > 0) ? newLoc : 0;
 		cursorPos = newLoc;
 	}
+												// Horizontal, Vertical, Diagonal
+	set<int> getPossibleMoves(int pos, int range, vector<bool> permissions) {
+		set<int> allMoves;
+		vector<set<int>> possibleMoves = { getStraightMoves(pos, range), getStraightMoves(pos, range, false) };
+		for (int i = 0; i < possibleMoves.size(); i++) {
+			if (permissions.at(i)) {
+				set<int> cur = possibleMoves.at(i);
+				allMoves.insert(cur.begin(), cur.end());
+			}
+		}
+		return allMoves;
+	}
+
+	set<int> getStraightMoves(int pos, int range, bool horizontal = true) {
+		int bound1 = pos, bound2 = pos, step = horizontal + !horizontal * width;
+		int min = (horizontal) ? (pos - pos % width - 1) : (pos - width * (pos / height));
+		int max = (horizontal) ? ((pos - pos % width) + width) : (width * height - (width - pos % width));
+		set<int> validMoves;
+		while (bound1 != min && (-(bound1 - pos) <= (horizontal ? range : range * width))
+					&& (!brd.at(bound1).getChessPiece().isActive() || bound1 == pos)) {
+			bound1 -= step;
+		}
+
+		while (bound2 != max && (bound2 - pos <= (horizontal ? range : range * width))
+					&& (!brd.at(bound2).getChessPiece().isActive() || bound2 == pos)) {
+			bound2 += step;
+		}
+		for (int i = bound1 + step; i < bound2; i += step) {
+			validMoves.insert(i);
+		}
+		return validMoves;
+	}
+
 };

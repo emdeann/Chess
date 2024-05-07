@@ -5,6 +5,7 @@
 using namespace std;
 
 const wstring RESET = L"\033[0m";
+const wstring BLACK = L"\033[30m";
 const wstring RED = L"\033[31m";
 const wstring GREEN = L"\033[32m";
 const wstring YELLOW = L"\033[33m";
@@ -13,12 +14,13 @@ const wstring MAGENTA = L"\033[35m";
 
 class Cell {
 private:
-	bool isCursor, isSelected;
+	bool isCursor, isSelected, isHighlighted;
 	ChessPiece piece;
 public:
 	Cell() {
 		isCursor = false;
 		isSelected = false;
+		isHighlighted = false;
 	}
 	void toggleSelected() {
 		isSelected = !isSelected;
@@ -41,6 +43,10 @@ public:
 		piece = ChessPiece();
 	}
 
+	void toggleHighlight() {
+		isHighlighted = !isHighlighted;
+	}
+
 	wstring getStr() {
 		wstring ch;
 		if (isCursor) {
@@ -52,6 +58,12 @@ public:
 
 		if (isSelected) {
 			ch = YELLOW + ch + RESET;
+		}
+		else if (isHighlighted) {
+			ch = GREEN + ch + RESET;
+		}
+		else if (piece.getSide()) {
+			ch = RED + ch + RESET;
 		}
 
 		return ch;
