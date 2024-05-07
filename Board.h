@@ -167,14 +167,18 @@ public:
 			max = width * (height + 1) - (width - pos % width);
 			step = width;
 			rangeMax = range * width;
+			break;
+		case 'd':
+			step = width + 1;
+			rangeMax = range * (width + 1);
 		}
 		set<int> validMoves;
-		while (bound1 != min && (-(bound1 - pos) <= rangeMax)
+		while (bound1 > min && (-(bound1 - pos) <= rangeMax)
 			&& (!brd.at(bound1).getChessPiece().isActive() || bound1 == pos)) {
 			bound1 -= step;
 		}
 
-		while (bound2 != max && (bound2 - pos <= rangeMax)
+		while (bound2 < max && (bound2 - pos <= rangeMax)
 			&& (!brd.at(bound2).getChessPiece().isActive() || bound2 == pos)) {
 			bound2 += step;
 		}
