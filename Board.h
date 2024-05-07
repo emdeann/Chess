@@ -123,7 +123,7 @@ public:
 												// Horizontal, Vertical, Diagonal
 	set<int> getPossibleMoves(int pos, int range, vector<bool> permissions) {
 		set<int> allMoves;
-		vector<set<int>> possibleMoves = { getStraightMoves(pos, range), getStraightMoves(pos, range, false) };
+		vector<set<int>> possibleMoves = { getMoves(pos, range, 'h'), getMoves(pos, range, 'v') };
 		for (int i = 0; i < possibleMoves.size(); i++) {
 			if (permissions.at(i)) {
 				set<int> cur = possibleMoves.at(i);
@@ -145,6 +145,37 @@ public:
 
 		while (bound2 != max && (bound2 - pos <= (horizontal ? range : range * width))
 					&& (!brd.at(bound2).getChessPiece().isActive() || bound2 == pos)) {
+			bound2 += step;
+		}
+		for (int i = bound1 + step; i < bound2; i += step) {
+			validMoves.insert(i);
+		}
+		return validMoves;
+	}
+
+	set<int> getMoves(int pos, int range, char method) {
+		int bound1 = pos, bound2 = pos, step, min, max, rangeMax;
+		switch (method) {
+		case 'h':
+			min = pos - pos % width - 1;
+			max = (pos - pos % width) + width;
+			step = 1;
+			rangeMax = range;
+			break;
+		case 'v':
+			min = pos - width * (pos / height + 1);
+			max = width * (height + 1) - (width - pos % width);
+			step = width;
+			rangeMax = range * width;
+		}
+		set<int> validMoves;
+		while (bound1 != min && (-(bound1 - pos) <= rangeMax)
+			&& (!brd.at(bound1).getChessPiece().isActive() || bound1 == pos)) {
+			bound1 -= step;
+		}
+
+		while (bound2 != max && (bound2 - pos <= rangeMax)
+			&& (!brd.at(bound2).getChessPiece().isActive() || bound2 == pos)) {
 			bound2 += step;
 		}
 		for (int i = bound1 + step; i < bound2; i += step) {
