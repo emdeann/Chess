@@ -17,14 +17,13 @@ using namespace std;
 
 const int NONE_SELECTED = -1;
 
-const vector<ChessPiece> BACK_ROW = { Rook(), Knight(), Bishop(), Queen(), King(), Bishop(), Knight(), Rook() };
-
 class Board {
 private:
 	int height, width, cursorPos;
 	vector<Cell> brd;
 	int selected;
 	set<int> currentValidMoves;
+	vector<ChessPiece> backRow;
 
 	void ShowConsoleCursor(bool showFlag)
 	{
@@ -51,13 +50,17 @@ private:
 	}
 
 	// Helpers
+
+	bool moveNotWrapped(int origPos, int newPos) {
+		return abs(newPos % width - origPos % width) < width / 2;
+	}
+
 	int getDiagonalMin(int pos, bool left) {
 		int loc = pos;
 		int prevLoc = loc;
-		while (loc > 0 && (abs(prevLoc % width - loc % width) <= 1)) {
+		while (loc > 0 && moveNotWrapped(loc, prevLoc)) {
 			prevLoc = loc;
 			loc -= width + left - !left;
-			
 		}
 		return loc;
 	}
@@ -65,13 +68,14 @@ private:
 	int getDiagonalMax(int pos, bool left) {
 		int loc = pos;
 		int prevLoc = loc;
-		while (loc < width * height && (abs(prevLoc % width - loc % width) <= 1)) {
+		while (loc < width * height && moveNotWrapped(loc, prevLoc)) {
 			prevLoc = loc;
  			loc += width + left - !left;
 		}
-
 		return loc;
 	}
+
+
 public:
 	Board(int h, int w) {
 		ShowConsoleCursor(false);
@@ -79,9 +83,10 @@ public:
 		width = w;
 		brd = vector<Cell>(h * w);
 		selected = -1;
+		backRow = { Rook(), Knight(w), Bishop(), Queen(), King(), Bishop(), Knight(w), Rook() };
 		for (int i = 0; i < w; i++) {
-			ChessPiece p = BACK_ROW.at(i);
-			Pawn pawn;
+			ChessPiece p = backRow.at(i);
+			Pawn pawn(w);
 			brd.at(i).setChessPiece(p);
 			p.switchSide();
 			brd.at((h * w - w) + i).setChessPiece(p);
@@ -113,28 +118,30 @@ public:
 			ChessPiece& curPiece = brd.at(cursorPos).getChessPiece();
 			if (curPiece.isActive()) {
 				selected = cursorPos;
-				currentValidMoves = getPossibleMoves(selected, curPiece.getRange(), curPiece.getValidDirections());
-				toggleMoveHighlights();
+				currentValidMoves = (curPiece.useStrictMotion()) ? getStrictMoves(selected, curPiece) 
+					: getPossibleMoves(selected, curPiece);
+				toggleMoveHighlights(curPiece.getSide());
 				brd.at(selected).toggleSelected();
 			}
 			
 		}
 		else {
-			if (currentValidMoves.find(cursorPos) != currentValidMoves.end()) {
+			if (selected != cursorPos && currentValidMoves.find(cursorPos) != currentValidMoves.end()) {
 				brd.at(selected).movePiece(brd.at(cursorPos));
-				brd.at(selected).toggleSelected();
-				selected = NONE_SELECTED;
-				toggleMoveHighlights();
-				currentValidMoves.clear();
 			}
+			brd.at(selected).toggleSelected();
+			selected = NONE_SELECTED;
+			toggleMoveHighlights();
+			currentValidMoves.clear();
 
 		}
 		
 	}
 
-	void toggleMoveHighlights() {
+	void toggleMoveHighlights(int side = -1) {
 		for (int i : currentValidMoves) {
-			brd.at(i).toggleHighlight();
+			wstring color = (side == -1 || brd.at(i).getChessPiece().getSide() == side) ? GREEN : RED;
+			brd.at(i).toggleHighlight(color);
 		}
 	}
 
@@ -144,15 +151,16 @@ public:
 		cursorPos = newLoc;
 	}
 												// Horizontal, Vertical, Diagonal
-	set<int> getPossibleMoves(int pos, int range, vector<bool> permissions) {
+	set<int> getPossibleMoves(int pos, ChessPiece& piece) {
 		set<int> allMoves;
+		vector<bool> permissions = piece.getValidDirections();
 		if (permissions.back()) {
 			permissions.push_back(true);
 		}
 		string possibleMoves = "hvlr";
 		for (int i = 0; i < permissions.size(); i++) {
 			if (permissions.at(i)) {
-				set<int> cur = getMoves(pos, range, possibleMoves.at(i));
+				set<int> cur = getMoves(pos, piece.getRange(), possibleMoves.at(i));
 				allMoves.insert(cur.begin(), cur.end());
 			}
 		}
@@ -218,6 +226,30 @@ public:
 			validMoves.insert(i);
 		}
 		return validMoves;
+	}
+
+	set<int> getStrictMoves(int pos, ChessPiece& piece) {
+		set<int> moves;
+		vector<int> moveList = piece.getStrictMoves();
+		for (int i : moveList) {
+			int newPos = pos + i;
+			if (newPos >= 0 && newPos < height * width && (!brd.at(newPos).getChessPiece().isActive() 
+				|| (brd.at(newPos).getChessPiece().getSide() != piece.getSide() && piece.canTakeStrictly()))
+				&& moveNotWrapped(pos, newPos)) {
+				moves.insert(newPos);
+			}
+		}
+		if (piece.hasSpecialTakeMoves()) {
+			vector<int> takeMoves = piece.getTakeMoves();
+			for (int i : takeMoves) {
+				int nPos = pos + i;
+				if (nPos >= 0 && nPos < height * width && brd.at(nPos).getChessPiece().isActive()
+					&& brd.at(nPos).getChessPiece().getSide() != piece.getSide() && moveNotWrapped(pos, nPos)) {
+					moves.insert(nPos);
+				}
+			}
+		}
+		return moves;
 	}
 
 

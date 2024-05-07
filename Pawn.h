@@ -3,11 +3,26 @@
 using namespace std;
 
 class Pawn : public ChessPiece {
+private:
+	void flipVector(vector<int>& v) {
+		for (int& i : v) {
+			i *= -1;
+		}
+	}
 public:
-	Pawn() {
+	Pawn(int boardWidth) {
 		ch = L"\u2659";
 		activePiece = true;
-		validDirections = { false, true, false };
+		strictMotion = true;
+		specialTakeMoves = true;
+		takeMoves = { boardWidth - 1, boardWidth + 1 };
+		strictMoves = { boardWidth};
 		range = 1;
+	}
+
+	void switchSide() override {
+		side = ~side;
+		flipVector(takeMoves);
+		flipVector(strictMoves);
 	}
 };

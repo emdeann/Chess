@@ -10,7 +10,8 @@ protected:
 	vector<bool> validDirections; // format: {canMoveHorizontal, canMoveVertical, canMoveDiagonal}
 	vector<int> takeMoves; 
 	int range, side; // 0: white 1: black
-	bool activePiece = true;
+	bool activePiece, strictMotion, strictCapture, specialTakeMoves;
+	vector<int> strictMoves; // int offsets from position instead of directions where needed (ie knight)
 
 public:
 	ChessPiece() {
@@ -18,12 +19,15 @@ public:
 		side = 0;
 		range = 0;
 		activePiece = false;
+		strictMotion = false;
+		strictCapture = false;
+		specialTakeMoves = false;
 	}
 	wstring getChar() {
 		return ch;
 	}
 
-	void switchSide() {
+	virtual void switchSide() {
 		side = ~side;
 	}
 
@@ -45,5 +49,25 @@ public:
 
 	bool isActive() {
 		return activePiece;
+	}
+
+	vector<int> getStrictMoves() {
+		return strictMoves;
+	}
+
+	bool useStrictMotion() {
+		return strictMotion;
+	}
+
+	bool canTakeStrictly() {
+		return strictCapture;
+	}
+
+	bool hasSpecialTakeMoves() {
+		return specialTakeMoves;
+	}
+
+	vector<int> getTakeMoves() {
+		return takeMoves;
 	}
 };

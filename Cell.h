@@ -15,12 +15,14 @@ const wstring MAGENTA = L"\033[35m";
 class Cell {
 private:
 	bool isCursor, isSelected, isHighlighted;
+	wstring highlightColor;
 	ChessPiece piece;
 public:
 	Cell() {
 		isCursor = false;
 		isSelected = false;
 		isHighlighted = false;
+		highlightColor = GREEN;
 	}
 	void toggleSelected() {
 		isSelected = !isSelected;
@@ -43,7 +45,8 @@ public:
 		piece = ChessPiece();
 	}
 
-	void toggleHighlight() {
+	void toggleHighlight(wstring color = GREEN) {
+		highlightColor = color;
 		isHighlighted = !isHighlighted;
 	}
 
@@ -60,10 +63,10 @@ public:
 			ch = YELLOW + ch + RESET;
 		}
 		else if (isHighlighted) {
-			ch = GREEN + ch + RESET;
+			ch = highlightColor + ch + RESET;
 		}
 		else if (piece.getSide()) {
-			ch = RED + ch + RESET;
+			ch = BLUE + ch + RESET;
 		}
 
 		return ch;

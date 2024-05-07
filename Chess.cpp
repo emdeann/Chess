@@ -15,8 +15,8 @@ const int BOARD_HEIGHT = 8;
 const int BOARD_WIDTH = 8;
 
 int main() {
-	bool game_running = true;
-	_setmode(_fileno(stdout), _O_U16TEXT);
+	bool game_running = _setmode(_fileno(stdout), _O_U16TEXT);
+	
 	Board myBoard(BOARD_HEIGHT, BOARD_WIDTH);
 	system("cls");
 	do {
