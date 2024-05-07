@@ -17,7 +17,7 @@ using namespace std;
 
 const int NONE_SELECTED = -1;
 
-const vector<ChessPiece> BACK_ROW = {Rook(), Knight(), Bishop(), Queen(), King(), Bishop(), Knight(), Rook()};
+const vector<ChessPiece> BACK_ROW = { Rook(), Knight(), Bishop(), Queen(), King(), Bishop(), Knight(), Rook() };
 
 class Board {
 private:
@@ -48,6 +48,29 @@ private:
 		int newLoc = (cursorPos + value) % (height * width);
 		newLoc = (newLoc > 0) ? newLoc : 0;
 		cursorPos = newLoc;
+	}
+
+	// Helpers
+	int getDiagonalMin(int pos, bool left) {
+		int loc = pos;
+		int prevLoc = loc;
+		while (loc > 0 && (abs(prevLoc % width - loc % width) <= 1)) {
+			prevLoc = loc;
+			loc -= width + left - !left;
+			
+		}
+		return loc;
+	}
+
+	int getDiagonalMax(int pos, bool left) {
+		int loc = pos;
+		int prevLoc = loc;
+		while (loc < width * height && (abs(prevLoc % width - loc % width) <= 1)) {
+			prevLoc = loc;
+ 			loc += width + left - !left;
+		}
+
+		return loc;
 	}
 public:
 	Board(int h, int w) {
@@ -123,10 +146,13 @@ public:
 												// Horizontal, Vertical, Diagonal
 	set<int> getPossibleMoves(int pos, int range, vector<bool> permissions) {
 		set<int> allMoves;
-		vector<set<int>> possibleMoves = { getMoves(pos, range, 'h'), getMoves(pos, range, 'v') };
-		for (int i = 0; i < possibleMoves.size(); i++) {
+		if (permissions.back()) {
+			permissions.push_back(true);
+		}
+		string possibleMoves = "hvlr";
+		for (int i = 0; i < permissions.size(); i++) {
 			if (permissions.at(i)) {
-				set<int> cur = possibleMoves.at(i);
+				set<int> cur = getMoves(pos, range, possibleMoves.at(i));
 				allMoves.insert(cur.begin(), cur.end());
 			}
 		}
@@ -160,25 +186,31 @@ public:
 			min = pos - pos % width - 1;
 			max = (pos - pos % width) + width;
 			step = 1;
-			rangeMax = range;
 			break;
 		case 'v':
 			min = pos - width * (pos / height + 1);
 			max = width * (height + 1) - (width - pos % width);
 			step = width;
-			rangeMax = range * width;
 			break;
-		case 'd':
+		case 'l': // left diagonal
+			min = getDiagonalMin(pos, true);
+			max = getDiagonalMax(pos, true);
 			step = width + 1;
-			rangeMax = range * (width + 1);
+			break;
+		case 'r':
+			min = getDiagonalMin(pos, false);
+			max = getDiagonalMax(pos, false);
+			step = width - 1;
+			break;
 		}
-		set<int> validMoves;
-		while (bound1 > min && (-(bound1 - pos) <= rangeMax)
+		rangeMax = range * step;
+ 		set<int> validMoves;
+		while (bound1 > min && (abs(bound1 - pos) <= rangeMax)
 			&& (!brd.at(bound1).getChessPiece().isActive() || bound1 == pos)) {
 			bound1 -= step;
 		}
 
-		while (bound2 < max && (bound2 - pos <= rangeMax)
+		while (bound2 < max && (abs(bound2 - pos) <= rangeMax)
 			&& (!brd.at(bound2).getChessPiece().isActive() || bound2 == pos)) {
 			bound2 += step;
 		}
@@ -187,5 +219,6 @@ public:
 		}
 		return validMoves;
 	}
+
 
 };

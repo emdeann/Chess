@@ -8,5 +8,6 @@ public:
 		ch = L"\u2657";
 		validDirections = { false, false, true };
 		range = MAX_RANGE;
+		activePiece = true;
 	}
 };

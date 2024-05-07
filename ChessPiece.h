@@ -16,6 +16,7 @@ public:
 	ChessPiece() {
 		ch = L"-";
 		side = 0;
+		range = 0;
 		activePiece = false;
 	}
 	wstring getChar() {
