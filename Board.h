@@ -28,24 +28,6 @@ private:
 	set<int> currentValidMoves;
 	vector<ChessPiece> backRow;
 
-	void ShowConsoleCursor(bool showFlag)
-	{
-		//-------do not change-------
-		//hides the cursor, use only once at program start
-		HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
-		CONSOLE_CURSOR_INFO cursorInfo;
-		GetConsoleCursorInfo(out, &cursorInfo);
-		cursorInfo.bVisible = showFlag; // set the cursor visibility
-		SetConsoleCursorInfo(out, &cursorInfo);
-	}
-	BOOL gotoxy(const WORD x, const WORD y) {
-		//-------do not change-------
-		COORD xy;
-		xy.X = x;
-		xy.Y = y;
-		return SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), xy);
-	}
-
 	// Helpers
 
 	bool moveNotWrapped(int origPos, int newPos) {
@@ -75,11 +57,10 @@ private:
 
 public:
 	Board(int h, int w) {
-		ShowConsoleCursor(false);
 		height = h;
 		width = w;
 		brd = vector<Cell>(h * w);
-		selected = -1;
+		selected = NONE_SELECTED;
 		backRow = { Rook(), Knight(w), Bishop(), Queen(), King(), Bishop(), Knight(w), Rook() };
 		for (int i = 0; i < w; i++) {
 			ChessPiece p = backRow.at(i);
