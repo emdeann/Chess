@@ -18,6 +18,7 @@
 using namespace std;
 
 const int NONE_SELECTED = -1;
+const int Y_OFFSET = 128;
 
 
 class Board : public sf::Drawable {
@@ -25,6 +26,7 @@ private:
 	int height, width;
 	vector<Cell> brd;
 	vector<int> scores;
+	vector<vector<ChessPiece>> captures;
 	int selected;
 	set<int> currentValidMoves;
 	vector<ChessPiece> backRow;
@@ -61,6 +63,7 @@ public:
 		height = h;
 		width = w;
 		scores = vector<int>(2);
+		captures = vector<vector<ChessPiece>>(2);
 		brd = vector<Cell>(h * w);
 		selected = NONE_SELECTED;
 		backRow = { Rook(), Knight(w), Bishop(), Queen(), King(), Bishop(), Knight(w), Rook() };
@@ -79,7 +82,7 @@ public:
 			bool whiteSquare = (i % 2 == 0 == i / h % 2);
 			c.setDefaultColor((whiteSquare) ? sf::Color::White : sf::Color::Black);
 			c.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
-			c.setPos(sf::Vector2f(CELL_WIDTH * (i % w), CELL_WIDTH * (i / h)));
+			c.setPos(sf::Vector2f(CELL_WIDTH * (i % w), CELL_WIDTH * (i / h) + Y_OFFSET));
 			c.getChessPiece().loadTexture();
 		}
 	}
@@ -107,7 +110,10 @@ public:
 			if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
 				ChessPiece oldPiece = brd.at(pos).getChessPiece();
 				brd.at(selected).movePiece(brd.at(pos));
-				scores.at(move) += oldPiece.isActive() * oldPiece.getValue();
+				if (oldPiece.isActive()) {
+					scores.at(move) += oldPiece.getValue();
+					captures.at(move).push_back(oldPiece);
+				}
 				turnCompleted = true;
 			}
 			brd.at(selected).toggleSelected();
