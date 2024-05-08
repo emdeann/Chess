@@ -114,8 +114,7 @@ public:
 			ChessPiece& curPiece = brd.at(pos).getChessPiece();
 			if (curPiece.isActive() && curPiece.getSide() == move) {
 				selected = pos;
-				currentValidMoves = (curPiece.useStrictMotion()) ? getStrictMoves(selected, curPiece) 
-					: getPossibleMoves(selected, curPiece);
+				currentValidMoves = getPossibleMoves(selected, curPiece);
 				toggleMoveHighlights(curPiece.getSide());
 				brd.at(selected).toggleSelected();
 			}
@@ -123,13 +122,15 @@ public:
 		}
 		else {
 			if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
+				ChessPiece curPiece = brd.at(selected).getChessPiece();
 				ChessPiece oldPiece = brd.at(pos).getChessPiece();
 				brd.at(selected).movePiece(brd.at(pos));
 				if (oldPiece.isActive()) {
 					scores.at(move) += oldPiece.getValue();
 					captures.at(move).push_back(oldPiece);
 				}
-				turnCompleted = true;
+				
+;				turnCompleted = true;
 			}
 			brd.at(selected).toggleSelected();
 			selected = NONE_SELECTED;
@@ -150,23 +151,59 @@ public:
 		}
 	}
 												
-	set<int> getPossibleMoves(int pos, ChessPiece& piece) {
+	set<int> getPossibleMoves(int pos, ChessPiece& piece, int rem = -25) {
 		set<int> allMoves;
-		vector<bool> permissions = piece.getValidDirections();
-		if (permissions.back()) {
-			permissions.push_back(true);
+		if (piece.useStrictMotion()) {
+			allMoves = getStrictMoves(pos, piece);
 		}
-		string possibleMoves = "hvlr";
-		for (int i = 0; i < permissions.size(); i++) {
-			if (permissions.at(i)) {
-				set<int> cur = getMoves(pos, piece.getRange(), piece.getSide(), possibleMoves.at(i));
-				allMoves.insert(cur.begin(), cur.end());
+		else {
+			vector<bool> permissions = piece.getValidDirections();
+			if (permissions.back()) {
+				permissions.push_back(true);
+			}
+			string possibleMoves = "hvlr";
+			for (int i = 0; i < permissions.size(); i++) {
+				if (permissions.at(i)) {
+					set<int> cur = getMoves(pos, piece.getRange(), piece.getSide(), possibleMoves.at(i), rem);
+					allMoves.insert(cur.begin(), cur.end());
+				}
+			}
+		}
+		if (rem == -25) {
+			for (int i : allMoves) {
+				if (testCheck(i, pos, piece.getSide() ^ 1)) {
+					cout << "illegal move: " << i << endl;
+				}
 			}
 		}
 		return allMoves;
 	}
 
-	set<int> getMoves(int pos, int range, int side, char method) {
+	bool testCheck(int posTo, int posFrom, int sideAgainst) {
+		bool chk = check(sideAgainst, brd.at(posFrom).getChessPiece(), posTo, posFrom);
+
+		return chk;
+	}
+
+
+	bool check(int sideFor, ChessPiece& subPiece, int repl, int rem) {
+		set<int> allMovesFor;
+		int opposingKingPos = 0;
+		for (int i = 0; i < brd.size(); i++) {
+			ChessPiece& cur = ((i == repl) ? subPiece : brd.at(i).getChessPiece());
+			if (cur.isOnSide(sideFor)) {
+				set<int> curMoves = getPossibleMoves(i, cur, rem);
+				allMovesFor.insert(curMoves.begin(), curMoves.end());
+			}
+			else if (cur.getName() == "king") {
+				opposingKingPos = i;
+			}
+		}
+		return allMovesFor.find(opposingKingPos) != allMovesFor.end();
+
+	}
+
+	set<int> getMoves(int pos, int range, int side, char method, int rem) {
 		int bound1 = pos, bound2 = pos, step, min, max, rangeMax, prevLoc;
 		set<int> validMoves;
 		switch (method) {
@@ -194,16 +231,16 @@ public:
 		rangeMax = range * step;
 		prevLoc = pos;
 		while (bound1 > min && (abs(bound1 - pos) <= rangeMax)
-			&& (!brd.at(bound1).getChessPiece().isOnSide(side) || bound1 == pos) 
-			&& (!brd.at(prevLoc).getChessPiece().isActive() || prevLoc == pos)) {
+			&& (!brd.at(bound1).getChessPiece().isOnSide(side) || bound1 == rem || bound1 == pos) 
+			&& (!brd.at(prevLoc).getChessPiece().isActive() || prevLoc == rem|| prevLoc == pos)) {
 			prevLoc = bound1;
 			bound1 -= step;
 		}
 
 		prevLoc = pos;
 		while (bound2 < max && (abs(bound2 - pos) <= rangeMax)
-			&& (!brd.at(bound2).getChessPiece().isOnSide(side) || bound2 == pos)
-			&& (!brd.at(prevLoc).getChessPiece().isActive() || prevLoc == pos)) {
+			&& (!brd.at(bound2).getChessPiece().isOnSide(side) || bound2 == rem || bound2 == pos)
+			&& (!brd.at(prevLoc).getChessPiece().isActive() || prevLoc == rem || prevLoc == pos)) {
 			prevLoc = bound2;
 			bound2 += step;
 		}
@@ -237,6 +274,10 @@ public:
 			}
 		}
 		return moves;
+	}
+
+	bool checkMate(int sideFor) {
+
 	}
 
 };

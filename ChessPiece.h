@@ -98,4 +98,8 @@ public:
 	int getValue() const {
 		return value;
 	}
+
+	string getName() {
+		return name;
+	}
 };
