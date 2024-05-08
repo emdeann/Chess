@@ -14,6 +14,7 @@ const wstring BLUE = L"\033[34m";
 const wstring MAGENTA = L"\033[35m";
 
 const int CELL_WIDTH = 64;
+const float DEFAULT_ITEM_SIZE = 0.375;
 
 class Cell : public sf::Drawable {
 private:
@@ -77,7 +78,7 @@ public:
 			sf::Texture texture = piece.getTexture();
 			pieceSprite.setTexture(texture);
 			pieceSprite.setOrigin(sf::Vector2f(texture.getSize().x / 2, texture.getSize().y / 2));
-			pieceSprite.setScale(sf::Vector2f(0.375f, 0.375f));
+			pieceSprite.setScale(sf::Vector2f(DEFAULT_ITEM_SIZE, DEFAULT_ITEM_SIZE));
 			sf::Vector2f rectPos = cellRect.getPosition();
 			pieceSprite.setPosition(rectPos.x + CELL_WIDTH/2, rectPos.y + CELL_WIDTH/2);
 			target.draw(pieceSprite);

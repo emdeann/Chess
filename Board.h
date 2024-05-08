@@ -19,6 +19,7 @@ using namespace std;
 
 const int NONE_SELECTED = -1;
 const int Y_OFFSET = 128;
+const int BOARD_DIM_IN_WINDOW = 512;
 
 
 class Board : public sf::Drawable {
@@ -40,7 +41,7 @@ private:
 	int getDiagonalMin(int pos, bool left) {
 		int loc = pos;
 		int prevLoc = loc;
-		while (loc > 0 && moveNotWrapped(loc, prevLoc)) {
+		while (loc >= 0 && moveNotWrapped(loc, prevLoc)) {
 			prevLoc = loc;
 			loc -= width + left - !left;
 		}
@@ -79,7 +80,7 @@ public:
 		}
 		for (int i = 0; i < h * w; i++) {
 			Cell& c = brd.at(i);
-			bool whiteSquare = (i % 2 == 0 == i / h % 2);
+			bool whiteSquare = (i % 2 == i / h % 2);
 			c.setDefaultColor((whiteSquare) ? sf::Color::White : sf::Color::Black);
 			c.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
 			c.setPos(sf::Vector2f(CELL_WIDTH * (i % w), CELL_WIDTH * (i / h) + Y_OFFSET));
@@ -90,6 +91,20 @@ public:
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const {
 		for (int i = 0; i < brd.size(); i++) {
 			target.draw(brd.at(i));
+		}
+		int mid = BOARD_DIM_IN_WINDOW / 2;
+		for (int i = 0; i < captures.size(); i++) {
+			vector<ChessPiece> cur = captures.at(i);
+			for (int j = 0; j < cur.size(); j++) {
+				ChessPiece piece = cur.at(j);
+				sf::Sprite pieceSprite;
+				sf::Texture texture = piece.getTexture();
+				pieceSprite.setTexture(texture);
+				pieceSprite.setOrigin(sf::Vector2f(texture.getSize().x / 2, texture.getSize().y / 2));
+				pieceSprite.setScale(sf::Vector2f(DEFAULT_ITEM_SIZE * 0.7, DEFAULT_ITEM_SIZE * 0.7));
+				pieceSprite.setPosition(mid + CELL_WIDTH/2 + Y_OFFSET/4 * (j % 7), Y_OFFSET/4 + (BOARD_DIM_IN_WINDOW + Y_OFFSET) * i + Y_OFFSET/4 * (j/7));
+				target.draw(pieceSprite);
+			}
 		}
 	}
 

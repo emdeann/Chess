@@ -15,8 +15,6 @@ using namespace std;
 const int BOARD_HEIGHT = 8;
 const int BOARD_WIDTH = 8;
 
-const int BOARD_DIM_IN_WINDOW = 512;
-
 bool inBoardRange(int x, int y) {
     return x >= 0 && x < BOARD_DIM_IN_WINDOW && y >= 0 && y < BOARD_DIM_IN_WINDOW;
 }
