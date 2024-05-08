@@ -28,7 +28,7 @@ public:
 	}
 
 	virtual void switchSide() {
-		side = ~side;
+		side ^= 1;
 	}
 
 	int getSide() {

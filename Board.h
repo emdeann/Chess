@@ -140,7 +140,7 @@ public:
 
 	void toggleMoveHighlights(int side = -1) {
 		for (int i : currentValidMoves) {
-			wstring color = (side == -1 || brd.at(i).getChessPiece().getSide() == side) ? GREEN : RED;
+  			wstring color = (!brd.at(i).getChessPiece().isActive() || brd.at(i).getChessPiece().getSide() == side) ? GREEN : RED;
 			brd.at(i).toggleHighlight(color);
 		}
 	}
@@ -150,7 +150,7 @@ public:
 		newLoc = (newLoc > 0) ? newLoc : 0;
 		cursorPos = newLoc;
 	}
-												// Horizontal, Vertical, Diagonal
+												
 	set<int> getPossibleMoves(int pos, ChessPiece& piece) {
 		set<int> allMoves;
 		vector<bool> permissions = piece.getValidDirections();
@@ -168,7 +168,7 @@ public:
 	}
 
 	set<int> getMoves(int pos, int range, int side, char method) {
-		int bound1 = pos, bound2 = pos, step, min, max, rangeMax;
+		int bound1 = pos, bound2 = pos, step, min, max, rangeMax, prevLoc;
 		set<int> validMoves;
 		switch (method) {
 		case 'h':
@@ -193,13 +193,19 @@ public:
 			break;
 		}
 		rangeMax = range * step;
+		prevLoc = pos;
 		while (bound1 > min && (abs(bound1 - pos) <= rangeMax)
-			&& (!brd.at(bound1).getChessPiece().isOnSide(side) || bound1 == pos)) {
+			&& (!brd.at(bound1).getChessPiece().isOnSide(side) || bound1 == pos) 
+			&& (!brd.at(prevLoc).getChessPiece().isActive() || prevLoc == pos)) {
+			prevLoc = bound1;
 			bound1 -= step;
 		}
 
+		prevLoc = pos;
 		while (bound2 < max && (abs(bound2 - pos) <= rangeMax)
-			&& (!brd.at(bound2).getChessPiece().isOnSide(side) || bound2 == pos)) {
+			&& (!brd.at(bound2).getChessPiece().isOnSide(side) || bound2 == pos)
+			&& (!brd.at(prevLoc).getChessPiece().isActive() || prevLoc == pos)) {
+			prevLoc = bound2;
 			bound2 += step;
 		}
 		for (int i = bound1 + step; i < bound2; i += step) {

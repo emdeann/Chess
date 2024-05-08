@@ -21,7 +21,7 @@ public:
 	}
 
 	void switchSide() override {
-		side = ~side;
+		ChessPiece::switchSide();
 		flipVector(takeMoves);
 		flipVector(strictMoves);
 	}
