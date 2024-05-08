@@ -17,7 +17,7 @@ protected:
 	vector<int> strictMoves; // int offsets from position instead of directions where needed (ie knight)
 	string name;
 	sf::Texture texture;
-	sf::Sprite sprite;
+	//sf::Sprite sprite;
 
 public:
 	ChessPiece() {
@@ -39,9 +39,9 @@ public:
 			fileName << "Textures/" << ((side) ? "b" : "w") << "_" << name << ".png";
 			cout << "Loading " << fileName.str() << endl;
 			texture.loadFromFile(fileName.str());
-			sprite.setTexture(texture);
-			sprite.setOrigin(sf::Vector2f(texture.getSize().x / 2, texture.getSize().y / 2));
-			sprite.setScale(sf::Vector2f(0.375f, 0.375f));
+			//sprite.setTexture(texture);
+			//sprite.setOrigin(sf::Vector2f(texture.getSize().x / 2, texture.getSize().y / 2));
+			//sprite.setScale(sf::Vector2f(0.375f, 0.375f));
 		}
 	}
 
@@ -94,7 +94,11 @@ public:
 		return takeMoves;
 	}
 
-	sf::Sprite getSprite() const {
-		return sprite;
+	//sf::Sprite getSprite() const {
+	//	return sprite;
+	//}
+
+	sf::Texture getTexture() const {
+		return texture;
 	}
 };

@@ -91,7 +91,11 @@ public:
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const {
 		target.draw(cellRect);
 		if (piece.isActive()) {
-			sf::Sprite pieceSprite = piece.getSprite();
+			sf::Sprite pieceSprite;
+			sf::Texture texture = piece.getTexture();
+			pieceSprite.setTexture(texture);
+			pieceSprite.setOrigin(sf::Vector2f(texture.getSize().x / 2, texture.getSize().y / 2));
+			pieceSprite.setScale(sf::Vector2f(0.375f, 0.375f));
 			sf::Vector2f rectPos = cellRect.getPosition();
 			pieceSprite.setPosition(rectPos.x + CELL_WIDTH/2, rectPos.y + CELL_WIDTH/2);
 			target.draw(pieceSprite);

@@ -46,12 +46,6 @@ private:
 		return SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), xy);
 	}
 
-	void moveCursor(int value) {
-		int newLoc = (cursorPos + value) % (height * width);
-		newLoc = (newLoc > 0) ? newLoc : 0;
-		cursorPos = newLoc;
-	}
-
 	// Helpers
 
 	bool moveNotWrapped(int origPos, int newPos) {
@@ -137,7 +131,7 @@ public:
 				selected = cursorPos;
 				currentValidMoves = (curPiece.useStrictMotion()) ? getStrictMoves(selected, curPiece) 
 					: getPossibleMoves(selected, curPiece);
-				toggleMoveHighlights(curPiece.getSide());
+				//toggleMoveHighlights(curPiece.getSide());
 				brd.at(selected).toggleSelected();
 			}
 			
@@ -148,8 +142,8 @@ public:
 			}
 			brd.at(selected).toggleSelected();
 			selected = NONE_SELECTED;
-			toggleMoveHighlights();
-			currentValidMoves.clear();
+			//toggleMoveHighlights();
+			//currentValidMoves.clear();
 
 		}
 		
@@ -160,12 +154,6 @@ public:
   			wstring color = (!brd.at(i).getChessPiece().isActive() || brd.at(i).getChessPiece().getSide() == side) ? GREEN : RED;
 			brd.at(i).toggleHighlight(color);
 		}
-	}
-
-	void moveCursor(int x, int y) {
-		int newLoc = (cursorPos + (x - width * y)) % (width * height);
-		newLoc = (newLoc > 0) ? newLoc : 0;
-		cursorPos = newLoc;
 	}
 												
 	set<int> getPossibleMoves(int pos, ChessPiece& piece) {
@@ -253,6 +241,10 @@ public:
 			}
 		}
 		return moves;
+	}
+
+	void setCursorPos(int pos) {
+		cursorPos = pos;
 	}
 
 

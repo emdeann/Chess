@@ -15,6 +15,12 @@ using namespace std;
 const int BOARD_HEIGHT = 8;
 const int BOARD_WIDTH = 8;
 
+const int BOARD_DIM_IN_WINDOW = 512;
+
+bool inBoardRange(int x, int y) {
+    return x >= 0 && x < BOARD_DIM_IN_WINDOW && y >= 0 && y < BOARD_DIM_IN_WINDOW;
+}
+
 int main() {
     sf::RenderWindow window(sf::VideoMode(768, 512), "Chess", sf::Style::Titlebar | sf::Style::Close);
     window.setVerticalSyncEnabled(true);
@@ -27,8 +33,21 @@ int main() {
 
             if (event.type == sf::Event::Closed)
                 window.close();
+
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                if (inBoardRange(event.mouseButton.x, event.mouseButton.y)) {
+                    int boardPos = (event.mouseButton.x / CELL_WIDTH) + (event.mouseButton.y / CELL_WIDTH) * BOARD_WIDTH;
+                    cout << boardPos << endl;
+                    board.setCursorPos(boardPos);
+                    board.onSpace();
+                }
+           
+                
+
+            }
         }
         window.draw(board);
         window.display();
     }
 }
+
