@@ -18,7 +18,8 @@ const int CELL_WIDTH = 64;
 class Cell : public sf::Drawable {
 private:
 	bool isCursor, isSelected, isHighlighted;
-	wstring highlightColor;
+	sf::Color highlightColor;
+	sf::Color defaultColor;
 	ChessPiece piece;
 	sf::RectangleShape cellRect;
 public:
@@ -26,7 +27,7 @@ public:
 		isCursor = false;
 		isSelected = false;
 		isHighlighted = false;
-		highlightColor = GREEN;
+		highlightColor = sf::Color::Green;
 	}
 	void toggleSelected() {
 		isSelected = !isSelected;
@@ -49,34 +50,14 @@ public:
 		piece = ChessPiece();
 	}
 
-	void toggleHighlight(wstring color = GREEN) {
+	void toggleHighlight(sf::Color color = sf::Color::Green) {
 		highlightColor = color;
 		isHighlighted = !isHighlighted;
+		cellRect.setFillColor((isHighlighted) ? highlightColor : defaultColor);
 	}
 
-	wstring getStr() {
-		wstring ch;
-		if (isCursor) {
-			ch = L"x";
-		}
-		else {
-			ch = piece.getChar();
-		}
-
-		if (isSelected) {
-			ch = YELLOW + ch + RESET;
-		}
-		else if (isHighlighted) {
-			ch = highlightColor + ch + RESET;
-		}
-		else if (piece.getSide()) {
-			ch = BLUE + ch + RESET;
-		}
-
-		return ch;
-	}
-
-	void setColor(sf::Color c) {
+	void setDefaultColor(sf::Color c) {
+		defaultColor = c;
 		cellRect.setFillColor(c);
 	}
 

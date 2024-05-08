@@ -94,27 +94,10 @@ public:
 		for (int i = 0; i < h * w; i++) {
 			Cell& c = brd.at(i);
 			bool whiteSquare = (i % 2 == 0 == i / h % 2);
-			c.setColor((whiteSquare) ? sf::Color::White : sf::Color::Black);
+			c.setDefaultColor((whiteSquare) ? sf::Color::White : sf::Color::Black);
 			c.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
 			c.setPos(sf::Vector2f(CELL_WIDTH * (i % w), CELL_WIDTH * (i / h)));
 			c.getChessPiece().loadTexture();
-		}
-	}
-
-	void drawConsole(bool rev) {
-		if (!rev) {
-			brd.at(cursorPos).toggleCursor();
-		}
-		gotoxy(0, 0);
-		for (int h = 0; h < height; h++) {
-			for (int w = 0; w < width; w++) {
-				Cell& c = brd.at(w + h * width);
-				wcout << c.getStr() << " ";
-			}
-			wcout << endl;
-		}
-		if (!rev) {
-			brd.at(cursorPos).toggleCursor();
 		}
 	}
 
@@ -131,7 +114,7 @@ public:
 				selected = cursorPos;
 				currentValidMoves = (curPiece.useStrictMotion()) ? getStrictMoves(selected, curPiece) 
 					: getPossibleMoves(selected, curPiece);
-				//toggleMoveHighlights(curPiece.getSide());
+				toggleMoveHighlights(curPiece.getSide());
 				brd.at(selected).toggleSelected();
 			}
 			
@@ -142,8 +125,8 @@ public:
 			}
 			brd.at(selected).toggleSelected();
 			selected = NONE_SELECTED;
-			//toggleMoveHighlights();
-			//currentValidMoves.clear();
+			toggleMoveHighlights();
+			currentValidMoves.clear();
 
 		}
 		
@@ -151,7 +134,7 @@ public:
 
 	void toggleMoveHighlights(int side = -1) {
 		for (int i : currentValidMoves) {
-  			wstring color = (!brd.at(i).getChessPiece().isActive() || brd.at(i).getChessPiece().getSide() == side) ? GREEN : RED;
+  			sf::Color color = (!brd.at(i).getChessPiece().isActive() || brd.at(i).getChessPiece().getSide() == side) ? sf::Color::Green : sf::Color::Red;
 			brd.at(i).toggleHighlight(color);
 		}
 	}
@@ -214,7 +197,9 @@ public:
 			bound2 += step;
 		}
 		for (int i = bound1 + step; i < bound2; i += step) {
-			validMoves.insert(i);
+			if (i != pos) {
+				validMoves.insert(i);
+			}
 		}
 		return validMoves;
 	}
