@@ -51,6 +51,10 @@ public:
 		return activePiece;
 	}
 
+	bool isOnSide(int s) {
+		return activePiece && side == s;
+	}
+
 	vector<int> getStrictMoves() {
 		return strictMoves;
 	}

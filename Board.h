@@ -160,35 +160,16 @@ public:
 		string possibleMoves = "hvlr";
 		for (int i = 0; i < permissions.size(); i++) {
 			if (permissions.at(i)) {
-				set<int> cur = getMoves(pos, piece.getRange(), possibleMoves.at(i));
+				set<int> cur = getMoves(pos, piece.getRange(), piece.getSide(), possibleMoves.at(i));
 				allMoves.insert(cur.begin(), cur.end());
 			}
 		}
 		return allMoves;
 	}
 
-	set<int> getStraightMoves(int pos, int range, bool horizontal = true) {
-		int bound1 = pos, bound2 = pos, step = horizontal + !horizontal * width;
-		int min = (horizontal) ? (pos - pos % width - 1) : (pos - width * (pos / height));
-		int max = (horizontal) ? ((pos - pos % width) + width) : (width * height - (width - pos % width));
-		set<int> validMoves;
-		while (bound1 != min && (-(bound1 - pos) <= (horizontal ? range : range * width))
-					&& (!brd.at(bound1).getChessPiece().isActive() || bound1 == pos)) {
-			bound1 -= step;
-		}
-
-		while (bound2 != max && (bound2 - pos <= (horizontal ? range : range * width))
-					&& (!brd.at(bound2).getChessPiece().isActive() || bound2 == pos)) {
-			bound2 += step;
-		}
-		for (int i = bound1 + step; i < bound2; i += step) {
-			validMoves.insert(i);
-		}
-		return validMoves;
-	}
-
-	set<int> getMoves(int pos, int range, char method) {
+	set<int> getMoves(int pos, int range, int side, char method) {
 		int bound1 = pos, bound2 = pos, step, min, max, rangeMax;
+		set<int> validMoves;
 		switch (method) {
 		case 'h':
 			min = pos - pos % width - 1;
@@ -212,14 +193,13 @@ public:
 			break;
 		}
 		rangeMax = range * step;
- 		set<int> validMoves;
 		while (bound1 > min && (abs(bound1 - pos) <= rangeMax)
-			&& (!brd.at(bound1).getChessPiece().isActive() || bound1 == pos)) {
+			&& (!brd.at(bound1).getChessPiece().isOnSide(side) || bound1 == pos)) {
 			bound1 -= step;
 		}
 
 		while (bound2 < max && (abs(bound2 - pos) <= rangeMax)
-			&& (!brd.at(bound2).getChessPiece().isActive() || bound2 == pos)) {
+			&& (!brd.at(bound2).getChessPiece().isOnSide(side) || bound2 == pos)) {
 			bound2 += step;
 		}
 		for (int i = bound1 + step; i < bound2; i += step) {
