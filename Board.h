@@ -22,8 +22,9 @@ const int NONE_SELECTED = -1;
 
 class Board : public sf::Drawable {
 private:
-	int height, width, cursorPos;
+	int height, width;
 	vector<Cell> brd;
+	vector<int> scores;
 	int selected;
 	set<int> currentValidMoves;
 	vector<ChessPiece> backRow;
@@ -59,6 +60,7 @@ public:
 	Board(int h, int w) {
 		height = h;
 		width = w;
+		scores = vector<int>(2);
 		brd = vector<Cell>(h * w);
 		selected = NONE_SELECTED;
 		backRow = { Rook(), Knight(w), Bishop(), Queen(), King(), Bishop(), Knight(w), Rook() };
@@ -88,11 +90,12 @@ public:
 		}
 	}
 
-	void onSpace() {
+	bool selectTile(int pos, int move) {
+		bool turnCompleted = false;
 		if (selected == NONE_SELECTED) {
-			ChessPiece& curPiece = brd.at(cursorPos).getChessPiece();
-			if (curPiece.isActive()) {
-				selected = cursorPos;
+			ChessPiece& curPiece = brd.at(pos).getChessPiece();
+			if (curPiece.isActive() && curPiece.getSide() == move) {
+				selected = pos;
 				currentValidMoves = (curPiece.useStrictMotion()) ? getStrictMoves(selected, curPiece) 
 					: getPossibleMoves(selected, curPiece);
 				toggleMoveHighlights(curPiece.getSide());
@@ -101,8 +104,11 @@ public:
 			
 		}
 		else {
-			if (selected != cursorPos && currentValidMoves.find(cursorPos) != currentValidMoves.end()) {
-				brd.at(selected).movePiece(brd.at(cursorPos));
+			if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
+				ChessPiece oldPiece = brd.at(pos).getChessPiece();
+				brd.at(selected).movePiece(brd.at(pos));
+				scores.at(move) += oldPiece.isActive() * oldPiece.getValue();
+				turnCompleted = true;
 			}
 			brd.at(selected).toggleSelected();
 			selected = NONE_SELECTED;
@@ -110,6 +116,9 @@ public:
 			currentValidMoves.clear();
 
 		}
+
+		return turnCompleted;
+
 		
 	}
 
@@ -208,10 +217,5 @@ public:
 		}
 		return moves;
 	}
-
-	void setCursorPos(int pos) {
-		cursorPos = pos;
-	}
-
 
 };

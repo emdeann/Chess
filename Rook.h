@@ -10,5 +10,6 @@ public:
 		validDirections = { true, true, false };
 		range = MAX_RANGE;
 		activePiece = true;
+		value = 5;
 	}
 };

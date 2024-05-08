@@ -11,6 +11,7 @@ public:
 		range = 1;
 		name = "king";
 		texture.loadFromFile("Textures/w_king.png");
+		value = 0;
 	}
 
 	void switchSide() override {

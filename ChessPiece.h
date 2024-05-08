@@ -12,18 +12,18 @@ protected:
 	wstring ch;
 	vector<bool> validDirections; // format: {canMoveHorizontal, canMoveVertical, canMoveDiagonal}
 	vector<int> takeMoves; 
-	int range, side; // 0: white 1: black
+	int range, side, value; // 0: white 1: black
 	bool activePiece, strictMotion, strictCapture, specialTakeMoves;
 	vector<int> strictMoves; // int offsets from position instead of directions where needed (ie knight)
 	string name;
 	sf::Texture texture;
-	//sf::Sprite sprite;
 
 public:
 	ChessPiece() {
 		ch = L"-";
 		side = 0;
 		range = 0;
+		value = 0;
 		activePiece = false;
 		strictMotion = false;
 		strictCapture = false;
@@ -91,11 +91,11 @@ public:
 		return takeMoves;
 	}
 
-	//sf::Sprite getSprite() const {
-	//	return sprite;
-	//}
-
 	sf::Texture getTexture() const {
 		return texture;
+	}
+
+	int getValue() const {
+		return value;
 	}
 };

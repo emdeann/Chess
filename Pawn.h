@@ -19,6 +19,7 @@ public:
 		takeMoves = { boardWidth - 1, boardWidth + 1 };
 		strictMoves = { boardWidth};
 		range = 1;
+		value = 1;
 	}
 
 	void switchSide() override {

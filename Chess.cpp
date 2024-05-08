@@ -22,7 +22,8 @@ bool inBoardRange(int x, int y) {
 }
 
 int main() {
-    sf::RenderWindow window(sf::VideoMode(768, 512), "Chess", sf::Style::Titlebar | sf::Style::Close);
+    int move = 0;
+    sf::RenderWindow window(sf::VideoMode(512, 512), "Chess", sf::Style::Titlebar | sf::Style::Close);
     window.setVerticalSyncEnabled(true);
     Board board(BOARD_HEIGHT, BOARD_WIDTH);
     while (window.isOpen()) {
@@ -38,8 +39,9 @@ int main() {
                 if (inBoardRange(event.mouseButton.x, event.mouseButton.y)) {
                     int boardPos = (event.mouseButton.x / CELL_WIDTH) + (event.mouseButton.y / CELL_WIDTH) * BOARD_WIDTH;
                     cout << boardPos << endl;
-                    board.setCursorPos(boardPos);
-                    board.onSpace();
+                    if (board.selectTile(boardPos, move)) {
+                        move ^= 1;
+                    }
                 }
            
                 
