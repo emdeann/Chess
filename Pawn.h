@@ -12,6 +12,7 @@ private:
 public:
 	Pawn(int boardWidth) {
 		ch = L"\u2659";
+		name = "pawn";
 		activePiece = true;
 		strictMotion = true;
 		specialTakeMoves = true;

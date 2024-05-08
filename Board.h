@@ -1,4 +1,5 @@
 #pragma once
+
 #include "windows.h"
 #include "Cell.h"
 #include "ChessPiece.h"
@@ -13,11 +14,13 @@
 #include <iostream>
 #include <iomanip>
 
+
 using namespace std;
 
 const int NONE_SELECTED = -1;
 
-class Board {
+
+class Board : public sf::Drawable {
 private:
 	int height, width, cursorPos;
 	vector<Cell> brd;
@@ -94,9 +97,17 @@ public:
 			pawn.switchSide();
 			brd.at((h * (w - 2) + i)).setChessPiece(pawn);
 		}
+		for (int i = 0; i < h * w; i++) {
+			Cell& c = brd.at(i);
+			bool whiteSquare = (i % 2 == 0 == i / h % 2);
+			c.setColor((whiteSquare) ? sf::Color::White : sf::Color::Black);
+			c.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
+			c.setPos(sf::Vector2f(CELL_WIDTH * (i % w), CELL_WIDTH * (i / h)));
+			c.getChessPiece().loadTexture();
+		}
 	}
 
-	void draw(bool rev) {
+	void drawConsole(bool rev) {
 		if (!rev) {
 			brd.at(cursorPos).toggleCursor();
 		}
@@ -110,6 +121,12 @@ public:
 		}
 		if (!rev) {
 			brd.at(cursorPos).toggleCursor();
+		}
+	}
+
+	void draw(sf::RenderTarget& target, sf::RenderStates states) const {
+		for (int i = 0; i < brd.size(); i++) {
+			target.draw(brd.at(i));
 		}
 	}
 

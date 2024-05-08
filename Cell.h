@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <SFML/Graphics.hpp>
 #include "ChessPiece.h"
 
 using namespace std;
@@ -12,11 +13,14 @@ const wstring YELLOW = L"\033[33m";
 const wstring BLUE = L"\033[34m";
 const wstring MAGENTA = L"\033[35m";
 
-class Cell {
+const int CELL_WIDTH = 64;
+
+class Cell : public sf::Drawable {
 private:
 	bool isCursor, isSelected, isHighlighted;
 	wstring highlightColor;
 	ChessPiece piece;
+	sf::RectangleShape cellRect;
 public:
 	Cell() {
 		isCursor = false;
@@ -70,5 +74,27 @@ public:
 		}
 
 		return ch;
+	}
+
+	void setColor(sf::Color c) {
+		cellRect.setFillColor(c);
+	}
+
+	void setSize(sf::Vector2f vec) {
+		cellRect.setSize(vec);
+	}
+
+	void setPos(sf::Vector2f vec) {
+		cellRect.setPosition(vec);
+	}
+
+	void draw(sf::RenderTarget& target, sf::RenderStates states) const {
+		target.draw(cellRect);
+		if (piece.isActive()) {
+			sf::Sprite pieceSprite = piece.getSprite();
+			sf::Vector2f rectPos = cellRect.getPosition();
+			pieceSprite.setPosition(rectPos.x + CELL_WIDTH/2, rectPos.y + CELL_WIDTH/2);
+			target.draw(pieceSprite);
+		}
 	}
 };

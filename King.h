@@ -9,5 +9,14 @@ public:
 		activePiece = true;
 		validDirections = { true, true, true };
 		range = 1;
+		name = "king";
+		texture.loadFromFile("Textures/w_king.png");
+	}
+
+	void switchSide() override {
+		ChessPiece::switchSide();
+		ostringstream fileName;
+		fileName << "Textures/" << ((side) ? "b" : "w") << "_king.png";
+		texture.loadFromFile(fileName.str());
 	}
 };
