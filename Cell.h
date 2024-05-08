@@ -20,6 +20,7 @@ private:
 	bool isCursor, isSelected, isHighlighted;
 	sf::Color highlightColor;
 	sf::Color defaultColor;
+	sf::Color selectedColor;
 	ChessPiece piece;
 	sf::RectangleShape cellRect;
 public:
@@ -28,13 +29,13 @@ public:
 		isSelected = false;
 		isHighlighted = false;
 		highlightColor = sf::Color::Green;
+		selectedColor = sf::Color::Yellow;
+		cellRect.setOutlineColor(sf::Color::Black);
+		cellRect.setOutlineThickness(1);
 	}
 	void toggleSelected() {
 		isSelected = !isSelected;
-	}
-
-	void toggleCursor() {
-		isCursor = !isCursor;
+		cellRect.setFillColor((isSelected) ? selectedColor : defaultColor);
 	}
 
 	void setChessPiece(ChessPiece& p) {
