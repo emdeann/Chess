@@ -17,7 +17,7 @@
 
 using namespace std;
 
-const int NONE_SELECTED = -1;
+const int NONE_SELECTED = -10;
 const int Y_OFFSET = 128;
 const int BOARD_DIM_IN_WINDOW = 512;
 
@@ -129,7 +129,7 @@ public:
 					scores.at(move) += oldPiece.getValue();
 					captures.at(move).push_back(oldPiece);
 				}
-				
+				cout << "Check for " << curPiece.getSide() << boolalpha << ": " << check(curPiece.getSide()) << endl;
 ;				turnCompleted = true;
 			}
 			brd.at(selected).toggleSelected();
@@ -151,7 +151,7 @@ public:
 		}
 	}
 												
-	set<int> getPossibleMoves(int pos, ChessPiece& piece, int rem = -25) {
+	set<int> getPossibleMoves(int pos, ChessPiece& piece, ChessPiece subPiece = ChessPiece(), int repl = NONE_SELECTED, int rem = NONE_SELECTED, bool verifyLegal = true) {
 		set<int> allMoves;
 		if (piece.useStrictMotion()) {
 			allMoves = getStrictMoves(pos, piece);
@@ -164,35 +164,30 @@ public:
 			string possibleMoves = "hvlr";
 			for (int i = 0; i < permissions.size(); i++) {
 				if (permissions.at(i)) {
-					set<int> cur = getMoves(pos, piece.getRange(), piece.getSide(), possibleMoves.at(i), rem);
+					set<int> cur = getMoves(pos, piece.getRange(), piece.getSide(), possibleMoves.at(i), subPiece, repl, rem);
 					allMoves.insert(cur.begin(), cur.end());
 				}
 			}
 		}
-		if (rem == -25) {
-			for (int i : allMoves) {
-				if (testCheck(i, pos, piece.getSide() ^ 1)) {
-					cout << "illegal move: " << i << endl;
+		if (verifyLegal) {
+			for (set<int>::iterator i = allMoves.begin(); i != allMoves.end(); i++) {
+				// not fully implemented
+				if (check(piece.getSide() ^ 1, brd.at(pos).getChessPiece(), *i, pos)) {
+					cout << "illegal move: " << *i << endl;
 				}
 			}
 		}
 		return allMoves;
 	}
 
-	bool testCheck(int posTo, int posFrom, int sideAgainst) {
-		bool chk = check(sideAgainst, brd.at(posFrom).getChessPiece(), posTo, posFrom);
 
-		return chk;
-	}
-
-
-	bool check(int sideFor, ChessPiece& subPiece, int repl, int rem) {
+	bool check(int sideFor, ChessPiece subPiece = ChessPiece(), int repl = NONE_SELECTED, int rem = NONE_SELECTED) {
 		set<int> allMovesFor;
 		int opposingKingPos = 0;
 		for (int i = 0; i < brd.size(); i++) {
-			ChessPiece& cur = ((i == repl) ? subPiece : brd.at(i).getChessPiece());
+			ChessPiece cur = ((i == repl) ? subPiece : brd.at(i).getChessPiece());
 			if (cur.isOnSide(sideFor)) {
-				set<int> curMoves = getPossibleMoves(i, cur, rem);
+				set<int> curMoves = getPossibleMoves(i, cur, subPiece, repl, rem, false);
 				allMovesFor.insert(curMoves.begin(), curMoves.end());
 			}
 			else if (cur.getName() == "king") {
@@ -203,7 +198,7 @@ public:
 
 	}
 
-	set<int> getMoves(int pos, int range, int side, char method, int rem) {
+	set<int> getMoves(int pos, int range, int side, char method, ChessPiece subPiece = ChessPiece(), int repl = NONE_SELECTED, int rem = NONE_SELECTED) {
 		int bound1 = pos, bound2 = pos, step, min, max, rangeMax, prevLoc;
 		set<int> validMoves;
 		switch (method) {
@@ -231,16 +226,16 @@ public:
 		rangeMax = range * step;
 		prevLoc = pos;
 		while (bound1 > min && (abs(bound1 - pos) <= rangeMax)
-			&& (!brd.at(bound1).getChessPiece().isOnSide(side) || bound1 == rem || bound1 == pos) 
-			&& (!brd.at(prevLoc).getChessPiece().isActive() || prevLoc == rem|| prevLoc == pos)) {
+			&& (!((bound1 == repl) ? subPiece : brd.at(bound1).getChessPiece()).isOnSide(side) || bound1 == rem || bound1 == pos)
+			&& (!((prevLoc == repl) ? subPiece : brd.at(prevLoc).getChessPiece()).isActive() || prevLoc == rem || prevLoc == pos)) {
 			prevLoc = bound1;
 			bound1 -= step;
 		}
 
 		prevLoc = pos;
 		while (bound2 < max && (abs(bound2 - pos) <= rangeMax)
-			&& (!brd.at(bound2).getChessPiece().isOnSide(side) || bound2 == rem || bound2 == pos)
-			&& (!brd.at(prevLoc).getChessPiece().isActive() || prevLoc == rem || prevLoc == pos)) {
+			&& (!((bound2 == repl) ? subPiece : brd.at(bound2).getChessPiece()).isOnSide(side) || bound2 == rem || bound2 == pos)
+			&& (!((prevLoc == repl) ? subPiece : brd.at(prevLoc).getChessPiece()).isActive() || prevLoc == rem || prevLoc == pos)) {
 			prevLoc = bound2;
 			bound2 += step;
 		}
