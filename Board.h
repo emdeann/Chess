@@ -35,10 +35,13 @@ private:
 
 	// Helpers
 
+	// Verify that a move does not wrap to the other side of the board display
 	bool moveNotWrapped(int origPos, int newPos) {
 		return abs(newPos % width - origPos % width) < width / 2;
 	}
 
+
+	// Get bounds for diagonals (either direction) for use when finding available moves
 	int getDiagonalMin(int pos, bool left) {
 		int loc = pos;
 		int prevLoc = loc;
@@ -90,10 +93,18 @@ public:
 	}
 
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const {
+		int mid = BOARD_DIM_IN_WINDOW / 2;
+		int piecesInRow = 7;
+		double capSize = DEFAULT_ITEM_SIZE * 0.7;
+		int betweenCaptures = Y_OFFSET / 4;
+
+		// Pass to draw function in cells to draw active squares & pieces
 		for (int i = 0; i < brd.size(); i++) {
 			target.draw(brd.at(i));
 		}
-		int mid = BOARD_DIM_IN_WINDOW / 2;
+
+		// Draw captured pieces above/below board
+		
 		for (int i = 0; i < captures.size(); i++) {
 			vector<ChessPiece> cur = captures.at(i);
 			for (int j = 0; j < cur.size(); j++) {
@@ -102,13 +113,14 @@ public:
 				sf::Texture texture = piece.getTexture();
 				pieceSprite.setTexture(texture);
 				pieceSprite.setOrigin(sf::Vector2f(texture.getSize().x / 2, texture.getSize().y / 2));
-				pieceSprite.setScale(sf::Vector2f(DEFAULT_ITEM_SIZE * 0.7, DEFAULT_ITEM_SIZE * 0.7));
-				pieceSprite.setPosition(mid + CELL_WIDTH/2 + Y_OFFSET/4 * (j % 7), Y_OFFSET/4 + (BOARD_DIM_IN_WINDOW + Y_OFFSET) * i + Y_OFFSET/4 * (j/7));
+				pieceSprite.setScale(sf::Vector2f(capSize, capSize));
+				pieceSprite.setPosition(mid + CELL_WIDTH/4 + betweenCaptures * (j % piecesInRow), betweenCaptures + (BOARD_DIM_IN_WINDOW + Y_OFFSET) * i + betweenCaptures * (j/piecesInRow));
 				target.draw(pieceSprite);
 			}
 		}
 	}
 
+	// Called when a tile is clicked on in the GUI
 	bool selectTile(int pos, int move) {
 		bool turnCompleted = false;
 		if (selected == NONE_SELECTED) {
@@ -122,6 +134,7 @@ public:
 			
 		}
 		else {
+			// if selected is not none, then a piece is selected - attempt to move it
 			if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
 				ChessPiece curPiece = brd.at(selected).getChessPiece();
 				ChessPiece oldPiece = brd.at(pos).getChessPiece();
@@ -130,9 +143,9 @@ public:
 					scores.at(move) += oldPiece.getValue();
 					captures.at(move).push_back(oldPiece);
 				}
-				cout << "State: " << getStr(check(curPiece.getSide(), true)) << endl;
 ;				turnCompleted = true;
 			}
+			// clicking an invalid space will still cancel the move
 			brd.at(selected).toggleSelected();
 			selected = NONE_SELECTED;
 			toggleMoveHighlights();
@@ -145,21 +158,6 @@ public:
 		
 	}
 
-	string getStr(State s) {
-		switch (s) {
-		case CHECK: 
-			return "check";
-			break;
-		case CHECKMATE:
-			return "checkmate";
-			break;
-		case STALEMATE:
-			return "stalemate";
-			break;
-		default:
-			return "none";
-		}
-	}
 
 	void toggleMoveHighlights(int side = -1) {
 		for (int i : currentValidMoves) {
@@ -168,7 +166,7 @@ public:
 		}
 	}
 
-
+	// Determine if a side has check, checkmate, or stalemate | Args with default arguments are used when verifying legality of potential moves
 	State check(int sideFor, bool checkAll, ChessPiece subPiece = ChessPiece(), int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> allMovesFor;
 		State gameState = NONE;
@@ -198,7 +196,7 @@ public:
 
 	}
 
-
+	// Highest level method to get possible moves of any piece
 	set<int> getPossibleMoves(int pos, ChessPiece& piece, bool verifyLegal, ChessPiece subPiece = ChessPiece(), int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> allMoves;
 		if (piece.useStrictMotion()) {
@@ -220,6 +218,9 @@ public:
 		return allMoves;
 	}
 
+	/* Gets move from a standard piece(defined directions and movement range)
+	 Last four args are used in testing potential moves: the piece at subPieceAt is treated as subPiece, and the piece at removePieceFrom is treated as an empty space
+	 Effectively treats the board as if subPiece is at subPieceAt instead of removePieceFrom, without actually modifying the game board */
 	set<int> getMoves(int pos, int range, int side, char method, bool verifyLegal, ChessPiece subPiece = ChessPiece(), int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		int bound1 = pos, bound2 = pos, step, min, max, rangeMax, prevLoc;
 		set<int> validMoves;
@@ -269,10 +270,12 @@ public:
 		return validMoves;
 	}
 
+	// Method just makes this check more readable
 	bool moveResultsInCheck(ChessPiece movingPiece, int moveTo, int moveFrom) {
 		return check(movingPiece.getSide() ^ 1, false, movingPiece, moveTo, moveFrom);
 	}
 
+	// Used for pieces with different movement patterns (pawns, knights)
 	set<int> getStrictMoves(int pos, ChessPiece piece, bool verifyLegal, ChessPiece subPiece = ChessPiece(), int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> moves;
 		bool pieceInRange;
