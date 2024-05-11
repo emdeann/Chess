@@ -111,8 +111,16 @@ public:
 		return value;
 	}
 
-	string getName() {
+	string getName() const {
 		return name;
+	}
+
+	virtual bool isPawn() const {
+		return false;
+	}
+
+	virtual bool canBeEnPassanted() {
+		return false;
 	}
 
 };

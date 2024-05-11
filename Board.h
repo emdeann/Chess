@@ -242,6 +242,17 @@ public:
 		return allMoves;
 	}
 
+	vector<int> getNeighbors(int pos) {
+	vector<int> neighbors;
+		for (int i = 0; i < 2; i++) {
+			int adj = pos - 1 + 2 * i;
+			if ((!i && pos % width != 0) || (i && pos % width != width - 1)) {
+				neighbors.push_back(adj);
+			}
+		}
+		return neighbors;
+	}
+
 	void setCastleMoves(int kingPos) {
 		cout << kingPos << endl;
 		ChessPiece& king = brd.at(kingPos)->getChessPiece();
