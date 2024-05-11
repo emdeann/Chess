@@ -30,7 +30,7 @@ private:
 	vector<int> scores;
 	vector<vector<ChessPiece>> captures;
 	int selected;
-	set<int> currentValidMoves;
+	set<int> currentValidMoves, castleMoves;
 
 	// Helpers
 
@@ -69,6 +69,7 @@ public:
 		scores = vector<int>(2);
 		captures = vector<vector<ChessPiece>>(2);
 		brd = vector<Cell*>(h * w);
+		castleMoves = { NONE_SELECTED, NONE_SELECTED };
 		for (int i = 0; i < h * w; i++) {
 			brd.at(i) = new Cell;
 			brd.at(i)->setChessPiece(new ChessPiece);
@@ -149,6 +150,11 @@ public:
 			if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
 				ChessPiece oldPiece = brd.at(pos)->getChessPiece();
 				brd.at(selected)->movePiece(*brd.at(pos));
+				if (castleMoves.find(pos) != castleMoves.end()) {
+					bool rookRight = pos > selected;
+					int step = (rookRight) ? -1 : 1, rookPos = (rookRight) ? selected + 3 : selected - 4 ;
+					brd.at(rookPos)->movePiece(*brd.at(pos + step));
+				}
 				if (oldPiece.isActive()) {
 					scores.at(move) += oldPiece.getValue();
 					captures.at(move).push_back(oldPiece);
@@ -180,14 +186,14 @@ public:
 	State check(int sideFor, bool checkAll, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> allMovesFor;
 		State gameState = NONE;
-		int opposingKingPos = (subPiece.isKing()) * subPieceAt;
+		int opposingKingPos = (subPiece.isKing() && subPieceAt != NONE_SELECTED) * subPieceAt;
 		for (int i = 0; i < brd.size(); i++) {
 			ChessPiece& cur = brd.at(i)->getChessPiece();
 			if (cur.isOnSide(sideFor) && i != subPieceAt) {
 				set<int> curMoves = getPossibleMoves(i, cur, false, subPiece, subPieceAt, removePieceFrom);
 				allMovesFor.insert(curMoves.begin(), curMoves.end());
 			}
-			else if (!(subPiece.isKing()) && cur.isKing()) {
+			else if (!(subPiece.isKing() && subPieceAt != NONE_SELECTED) && cur.isKing()) {
 				opposingKingPos = i;
 			}
 		}
@@ -225,17 +231,37 @@ public:
 				}
 			}
 		}
+		if (piece.isKing() && verifyLegal) {
+			setCastleMoves(pos);
+			for (int i : castleMoves) {
+				if (i != NONE_SELECTED) {
+					allMoves.insert(i);
+				}
+			}
+		}
 		return allMoves;
 	}
 
-	vector<bool> castleAvailable(int kingPos) {
+	void setCastleMoves(int kingPos) {
+		cout << kingPos << endl;
 		ChessPiece& king = brd.at(kingPos)->getChessPiece();
-
+		vector<int> distances{ 3, 4 };
+		bool canCastle = king.canCastle();
+		bool inCheck = check(king.getSide() ^ 1, false, king) == CHECK;
+		castleMoves.erase(castleMoves.begin(), castleMoves.end());
+		for (int i = 0; i < distances.size(); i++) {
+			if (canCastle && !inCheck && clearPathToRook(kingPos, -2 * i + 1, distances.at(i), king.getSide())) {	
+				castleMoves.insert( kingPos + 2 - 4*i);
+			}
+			else {
+				castleMoves.insert(NONE_SELECTED);
+			}
+		}
 	}
 
 	bool clearPathToRook(int pos, int step, int dist, int side) {
 		bool clearPath = true;
-		for (int i = pos; abs(pos - i) < dist && clearPath; i += step) {
+		for (int i = pos + step; abs(pos - i) < dist && clearPath; i += step) {
 			clearPath = !brd.at(i)->getChessPiece().isActive();
 		}
 		int end = pos + dist * step;
