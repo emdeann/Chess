@@ -22,10 +22,11 @@ private:
 	sf::Color highlightColor;
 	sf::Color defaultColor;
 	sf::Color selectedColor;
-	ChessPiece piece;
+	ChessPiece* piece;
 	sf::RectangleShape cellRect;
 public:
 	Cell() {
+		piece = nullptr;
 		isCursor = false;
 		isSelected = false;
 		isHighlighted = false;
@@ -34,22 +35,27 @@ public:
 		cellRect.setOutlineColor(sf::Color::Black);
 		cellRect.setOutlineThickness(1);
 	}
+	~Cell() {
+		delete piece;
+	}
 	void toggleSelected() {
 		isSelected = !isSelected;
 		cellRect.setFillColor((isSelected) ? selectedColor : defaultColor);
 	}
 
-	void setChessPiece(ChessPiece& p) {
+	void setChessPiece(ChessPiece* p) {
 		piece = p;
 	}
 
 	ChessPiece& getChessPiece() {
-		return piece;
+		return *piece;
 	}
 
 	void movePiece(Cell& other) {
+		piece->onMove();
+		delete other.piece;
 		other.piece = piece;
-		piece = ChessPiece();
+		piece = new ChessPiece;
 	}
 
 	void toggleHighlight(sf::Color color = sf::Color::Green) {
@@ -73,9 +79,9 @@ public:
 
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const {
 		target.draw(cellRect);
-		if (piece.isActive()) {
+		if (piece->isActive()) {
 			sf::Sprite pieceSprite;
-			sf::Texture texture = piece.getTexture();
+			sf::Texture texture = piece->getTexture();
 			pieceSprite.setTexture(texture);
 			pieceSprite.setOrigin(sf::Vector2f(texture.getSize().x / 2, texture.getSize().y / 2));
 			pieceSprite.setScale(sf::Vector2f(DEFAULT_ITEM_SIZE, DEFAULT_ITEM_SIZE));

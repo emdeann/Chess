@@ -3,6 +3,8 @@
 using namespace std;
 
 class King : public ChessPiece {
+private:
+	bool castle;
 public:
 	King() {
 		ch = L"\u2654";
@@ -12,12 +14,19 @@ public:
 		name = "king";
 		texture.loadFromFile("Textures/w_king.png");
 		value = 0;
+		castle = true;
 	}
 
-	void switchSide() override {
-		ChessPiece::switchSide();
-		ostringstream fileName;
-		fileName << "Textures/" << ((side) ? "b" : "w") << "_king.png";
-		texture.loadFromFile(fileName.str());
+	bool isKing() override {
+		return true;
 	}
+
+	void onMove() override {
+		castle = false;
+	}
+
+	bool canCastle() override {
+		return castle;
+	}
+
 };

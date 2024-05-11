@@ -42,9 +42,6 @@ int main() {
                         move ^= 1;
                     }
                 }
-           
-                
-
             }
         }
         window.draw(board);

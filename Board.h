@@ -26,12 +26,11 @@ const enum State {NONE, CHECK, CHECKMATE, STALEMATE};
 class Board : public sf::Drawable {
 private:
 	int height, width;
-	vector<Cell> brd;
+	vector<Cell*> brd;
 	vector<int> scores;
 	vector<vector<ChessPiece>> captures;
 	int selected;
 	set<int> currentValidMoves;
-	vector<ChessPiece> backRow;
 
 	// Helpers
 
@@ -69,26 +68,38 @@ public:
 		width = w;
 		scores = vector<int>(2);
 		captures = vector<vector<ChessPiece>>(2);
-		brd = vector<Cell>(h * w);
+		brd = vector<Cell*>(h * w);
+		for (int i = 0; i < h * w; i++) {
+			brd.at(i) = new Cell;
+			brd.at(i)->setChessPiece(new ChessPiece);
+		}
 		selected = NONE_SELECTED;
-		backRow = { Rook(), Knight(w), Bishop(), Queen(), King(), Bishop(), Knight(w), Rook() };
-		for (int i = 0; i < w; i++) {
-			ChessPiece p = backRow.at(i);
-			Pawn pawn(w);
-			brd.at(i).setChessPiece(p);
-			p.switchSide();
-			brd.at((h * w - w) + i).setChessPiece(p);
-			brd.at(w + i).setChessPiece(pawn);
-			pawn.switchSide();
-			brd.at((h * (w - 2) + i)).setChessPiece(pawn);
+		for (int j = 0; j < 2; j++) {
+			vector<ChessPiece*> backRow = { new Rook, new Knight(w), new Bishop, new Queen, new King, new Bishop, new Knight(w), new Rook };
+			for (int i = 0; i < w; i++) {
+				ChessPiece* backPiece = backRow.at(i);
+				Pawn* pawn = new Pawn(w);
+				if (j) {
+					backPiece->switchSide();
+					pawn->switchSide();
+				}
+				brd.at(i + (j) * (h * w - w))->setChessPiece(backPiece);
+				brd.at(w + i + (h * (w - 3)) * j)->setChessPiece(pawn);
+			}
 		}
 		for (int i = 0; i < h * w; i++) {
-			Cell& c = brd.at(i);
+			Cell& c = *brd.at(i);
 			bool whiteSquare = (i % 2 == i / h % 2);
 			c.setDefaultColor((whiteSquare) ? sf::Color::White : sf::Color::Black);
 			c.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
 			c.setPos(sf::Vector2f(CELL_WIDTH * (i % w), CELL_WIDTH * (i / h) + Y_OFFSET));
 			c.getChessPiece().loadTexture();
+		}
+	}
+
+	~Board() {
+		for (int i = 0; i < brd.size(); i++) {
+			delete brd.at(i);
 		}
 	}
 
@@ -100,7 +111,7 @@ public:
 
 		// Pass to draw function in cells to draw active squares & pieces
 		for (int i = 0; i < brd.size(); i++) {
-			target.draw(brd.at(i));
+			target.draw(*brd.at(i));
 		}
 
 		// Draw captured pieces above/below board
@@ -124,21 +135,20 @@ public:
 	bool selectTile(int pos, int move) {
 		bool turnCompleted = false;
 		if (selected == NONE_SELECTED) {
-			ChessPiece& curPiece = brd.at(pos).getChessPiece();
+			ChessPiece& curPiece = brd.at(pos)->getChessPiece();
 			if (curPiece.isActive() && curPiece.getSide() == move) {
 				selected = pos;
-				currentValidMoves = getPossibleMoves(selected, curPiece, true);
+				currentValidMoves = getPossibleMoves(selected, curPiece, true, curPiece);
 				toggleMoveHighlights(curPiece.getSide());
-				brd.at(selected).toggleSelected();
+				brd.at(selected)->toggleSelected();
 			}
 			
 		}
 		else {
 			// if selected is not none, then a piece is selected - attempt to move it
 			if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
-				ChessPiece curPiece = brd.at(selected).getChessPiece();
-				ChessPiece oldPiece = brd.at(pos).getChessPiece();
-				brd.at(selected).movePiece(brd.at(pos));
+				ChessPiece oldPiece = brd.at(pos)->getChessPiece();
+				brd.at(selected)->movePiece(*brd.at(pos));
 				if (oldPiece.isActive()) {
 					scores.at(move) += oldPiece.getValue();
 					captures.at(move).push_back(oldPiece);
@@ -146,7 +156,7 @@ public:
 ;				turnCompleted = true;
 			}
 			// clicking an invalid space will still cancel the move
-			brd.at(selected).toggleSelected();
+			brd.at(selected)->toggleSelected();
 			selected = NONE_SELECTED;
 			toggleMoveHighlights();
 			currentValidMoves.clear();
@@ -161,23 +171,23 @@ public:
 
 	void toggleMoveHighlights(int side = -1) {
 		for (int i : currentValidMoves) {
-  			sf::Color color = (!brd.at(i).getChessPiece().isActive() || brd.at(i).getChessPiece().getSide() == side) ? sf::Color::Green : sf::Color::Red;
-			brd.at(i).toggleHighlight(color);
+  			sf::Color color = (!brd.at(i)->getChessPiece().isActive() || brd.at(i)->getChessPiece().getSide() == side) ? sf::Color::Green : sf::Color::Red;
+			brd.at(i)->toggleHighlight(color);
 		}
 	}
 
 	// Determine if a side has check, checkmate, or stalemate | Args with default arguments are used when verifying legality of potential moves
-	State check(int sideFor, bool checkAll, ChessPiece subPiece = ChessPiece(), int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+	State check(int sideFor, bool checkAll, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> allMovesFor;
 		State gameState = NONE;
-		int opposingKingPos = (subPiece.getName() == "king") * subPieceAt;
+		int opposingKingPos = (subPiece.isKing()) * subPieceAt;
 		for (int i = 0; i < brd.size(); i++) {
-			ChessPiece cur = brd.at(i).getChessPiece();
+			ChessPiece& cur = brd.at(i)->getChessPiece();
 			if (cur.isOnSide(sideFor) && i != subPieceAt) {
 				set<int> curMoves = getPossibleMoves(i, cur, false, subPiece, subPieceAt, removePieceFrom);
 				allMovesFor.insert(curMoves.begin(), curMoves.end());
 			}
-			else if (!(subPiece.getName() == "king") && cur.getName() == "king") {
+			else if (!(subPiece.isKing()) && cur.isKing()) {
 				opposingKingPos = i;
 			}
 		}
@@ -187,7 +197,7 @@ public:
 		if (checkAll) {
 			bool noOpponentMoves = true;
 			for (int i = 0; i < brd.size() && noOpponentMoves; i++) {
-				ChessPiece cur = brd.at(i).getChessPiece();
+				ChessPiece& cur = brd.at(i)->getChessPiece();
 				noOpponentMoves = !cur.isOnSide(sideFor ^ 1) || getPossibleMoves(i, cur, true, subPiece, subPieceAt, removePieceFrom).empty();
 			}
 			gameState = (noOpponentMoves) ? ((gameState == CHECK) ? CHECKMATE : STALEMATE) : gameState;
@@ -197,7 +207,7 @@ public:
 	}
 
 	// Highest level method to get possible moves of any piece
-	set<int> getPossibleMoves(int pos, ChessPiece& piece, bool verifyLegal, ChessPiece subPiece = ChessPiece(), int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+	set<int> getPossibleMoves(int pos, ChessPiece& piece, bool verifyLegal, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> allMoves;
 		if (piece.useStrictMotion()) {
 			allMoves = getStrictMoves(pos, piece, verifyLegal, subPiece, subPieceAt, removePieceFrom);
@@ -218,10 +228,25 @@ public:
 		return allMoves;
 	}
 
+	vector<bool> castleAvailable(int kingPos) {
+		ChessPiece& king = brd.at(kingPos)->getChessPiece();
+
+	}
+
+	bool clearPathToRook(int pos, int step, int dist, int side) {
+		bool clearPath = true;
+		for (int i = pos; abs(pos - i) < dist && clearPath; i += step) {
+			clearPath = !brd.at(i)->getChessPiece().isActive();
+		}
+		int end = pos + dist * step;
+		ChessPiece& endPiece = brd.at(end)->getChessPiece();
+		return clearPath && endPiece.isOnSide(side) && endPiece.getName() == "rook";
+	}
+
 	/* Gets move from a standard piece(defined directions and movement range)
 	 Last four args are used in testing potential moves: the piece at subPieceAt is treated as subPiece, and the piece at removePieceFrom is treated as an empty space
 	 Effectively treats the board as if subPiece is at subPieceAt instead of removePieceFrom, without actually modifying the game board */
-	set<int> getMoves(int pos, int range, int side, char method, bool verifyLegal, ChessPiece subPiece = ChessPiece(), int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+	set<int> getMoves(int pos, int range, int side, char method, bool verifyLegal, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		int bound1 = pos, bound2 = pos, step, min, max, rangeMax, prevLoc;
 		set<int> validMoves;
 		switch (method) {
@@ -249,21 +274,21 @@ public:
 		rangeMax = range * step;
 		prevLoc = pos;
 		while (bound1 > min && (abs(bound1 - pos) <= rangeMax)
-			&& (!((bound1 == subPieceAt) ? subPiece : brd.at(bound1).getChessPiece()).isOnSide(side) || bound1 == removePieceFrom || bound1 == pos)
-			&& (!((prevLoc == subPieceAt) ? subPiece : brd.at(prevLoc).getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
+			&& (!((bound1 == subPieceAt) ? subPiece : brd.at(bound1)->getChessPiece()).isOnSide(side) || bound1 == removePieceFrom || bound1 == pos)
+			&& (!((prevLoc == subPieceAt) ? subPiece : brd.at(prevLoc)->getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
 			prevLoc = bound1;
 			bound1 -= step;
 		}
 
 		prevLoc = pos;
 		while (bound2 < max && (abs(bound2 - pos) <= rangeMax)
-			&& (!((bound2 == subPieceAt) ? subPiece : brd.at(bound2).getChessPiece()).isOnSide(side) || bound2 == removePieceFrom || bound2 == pos)
-			&& (!((prevLoc == subPieceAt) ? subPiece : brd.at(prevLoc).getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
+			&& (!((bound2 == subPieceAt) ? subPiece : brd.at(bound2)->getChessPiece()).isOnSide(side) || bound2 == removePieceFrom || bound2 == pos)
+			&& (!((prevLoc == subPieceAt) ? subPiece : brd.at(prevLoc)->getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
 			prevLoc = bound2;
 			bound2 += step;
 		}
 		for (int i = bound1 + step; i < bound2; i += step) {
-			if (i != pos && !(verifyLegal && moveResultsInCheck(brd.at(pos).getChessPiece(), i, pos))) {
+			if (i != pos && !(verifyLegal && moveResultsInCheck(brd.at(pos)->getChessPiece(), i, pos))) {
 				validMoves.insert(i);
 			}
 		}
@@ -271,19 +296,19 @@ public:
 	}
 
 	// Method just makes this check more readable
-	bool moveResultsInCheck(ChessPiece movingPiece, int moveTo, int moveFrom) {
+	bool moveResultsInCheck(ChessPiece& movingPiece, int moveTo, int moveFrom) {
 		return check(movingPiece.getSide() ^ 1, false, movingPiece, moveTo, moveFrom);
 	}
 
 	// Used for pieces with different movement patterns (pawns, knights)
-	set<int> getStrictMoves(int pos, ChessPiece piece, bool verifyLegal, ChessPiece subPiece = ChessPiece(), int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+	set<int> getStrictMoves(int pos, ChessPiece& piece, bool verifyLegal, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> moves;
 		bool pieceInRange;
 		vector<int> moveList = piece.getStrictMoves();
 		for (int i : moveList) {
 			int newPos = pos + i;
 			pieceInRange = newPos >= 0 && newPos < height * width;
-			ChessPiece posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : brd.at(newPos).getChessPiece();
+			ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : brd.at(newPos)->getChessPiece();
 			if (pieceInRange && (newPos == removePieceFrom || !posPiece.isActive() 
 				|| (posPiece.getSide() != piece.getSide() && piece.canTakeStrictly()))
 				&& moveNotWrapped(pos, newPos) && !(verifyLegal && moveResultsInCheck(piece, newPos, pos))) {
@@ -295,7 +320,7 @@ public:
 			for (int i : takeMoves) {
 				int newPos = pos + i;
 				pieceInRange = newPos >= 0 && newPos < height * width;
-				ChessPiece posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : brd.at(newPos).getChessPiece();
+				ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : brd.at(newPos)->getChessPiece();
 				if (newPos >= 0 && newPos < height * width && posPiece.isActive()
 					&& posPiece.getSide() != piece.getSide() && moveNotWrapped(pos, newPos) && (newPos != removePieceFrom) 
 					&& !(verifyLegal && moveResultsInCheck(piece, newPos, pos))) {

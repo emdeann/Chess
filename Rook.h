@@ -12,4 +12,5 @@ public:
 		activePiece = true;
 		value = 5;
 	}
+
 };

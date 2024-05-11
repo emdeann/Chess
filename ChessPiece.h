@@ -42,6 +42,10 @@ public:
 		}
 	}
 
+	virtual void onMove() {
+		// called every time the piece is moved
+	}
+
 	virtual void switchSide() {
 		side ^= 1;
 		loadTexture();
@@ -87,6 +91,14 @@ public:
 		return specialTakeMoves;
 	}
 
+	virtual bool isKing() {
+		return false;
+	}
+
+	virtual bool canCastle() {
+		return false;
+	}
+
 	vector<int> getTakeMoves() const {
 		return takeMoves;
 	}
@@ -102,4 +114,5 @@ public:
 	string getName() {
 		return name;
 	}
+
 };

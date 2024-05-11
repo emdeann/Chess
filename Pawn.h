@@ -27,4 +27,5 @@ public:
 		flipVector(takeMoves);
 		flipVector(strictMoves);
 	}
+
 };
