@@ -42,7 +42,7 @@ public:
 		}
 	}
 
-	virtual void onMove() {
+	virtual void onMove(int moveDiff, int moveNum) {
 		// called every time the piece is moved
 	}
 
@@ -119,7 +119,7 @@ public:
 		return false;
 	}
 
-	virtual bool canBeEnPassanted() {
+	virtual bool canBeEnPassanted(int moveNum) {
 		return false;
 	}
 

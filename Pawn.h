@@ -4,7 +4,7 @@ using namespace std;
 
 class Pawn : public ChessPiece {
 private:
-	bool firstMove;
+	int moves, lastMoveDiff, boardWidth, doubleMoveTurn;
 
 	void flipVector(vector<int>& v) {
 		for (int& i : v) {
@@ -12,29 +12,40 @@ private:
 		}
 	}
 public:
-	Pawn(int boardWidth) {
+	Pawn(int w) {
 		ch = L"\u2659";
 		name = "pawn";
+		boardWidth = w;
 		activePiece = true;
 		strictMotion = true;
 		specialTakeMoves = true;
-		firstMove = true;
-		takeMoves = { boardWidth - 1, boardWidth + 1 };
-		strictMoves = { boardWidth, 2 * boardWidth};
+		lastMoveDiff = 0;
+		moves = 0;
+		doubleMoveTurn = -1;
+		takeMoves = { w - 1, w + 1 };
+		strictMoves = { w, 2 * w};
 		value = 1;
 	}
 
-	void onMove() override {
-		if (firstMove) {
+	void onMove(int moveDiff, int moveNum) override {
+		if (!moves++) {
+			if (moveDiff == 2 * boardWidth) {
+				doubleMoveTurn = moveNum;
+			}
 			strictMoves.erase(strictMoves.begin() + 1);
-			firstMove = false;
 		}
+		lastMoveDiff = moveDiff;
 	}
 
 	void switchSide() override {
 		ChessPiece::switchSide();
 		flipVector(takeMoves);
 		flipVector(strictMoves);
+	}
+
+	bool canBeEnPassanted(int moveNum) override {
+		// First move, moved two spaces, turn after move
+		return moves == 1 && lastMoveDiff == 2 * boardWidth && moveNum == doubleMoveTurn + 1;
 	}
 
 	bool isPawn() const override {

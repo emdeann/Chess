@@ -26,7 +26,7 @@ private:
 	sf::RectangleShape cellRect;
 public:
 	Cell() {
-		piece = nullptr;
+		piece = new ChessPiece;
 		isCursor = false;
 		isSelected = false;
 		isHighlighted = false;
@@ -44,6 +44,7 @@ public:
 	}
 
 	void setChessPiece(ChessPiece* p) {
+		delete piece;
 		piece = p;
 	}
 
@@ -52,7 +53,6 @@ public:
 	}
 
 	void movePiece(Cell& other) {
-		piece->onMove();
 		delete other.piece;
 		other.piece = piece;
 		piece = new ChessPiece;

@@ -25,12 +25,13 @@ const enum State {NONE, CHECK, CHECKMATE, STALEMATE};
 
 class Board : public sf::Drawable {
 private:
-	int height, width;
-	vector<Cell*> brd;
+	int height, width, curMoveNum, enPassantMove;
+	vector<Cell> brd;
 	vector<int> scores;
 	vector<vector<ChessPiece>> captures;
 	int selected;
 	set<int> currentValidMoves, castleMoves;
+
 
 	// Helpers
 
@@ -66,14 +67,11 @@ public:
 	Board(int h, int w) {
 		height = h;
 		width = w;
+		curMoveNum = 0;
 		scores = vector<int>(2);
 		captures = vector<vector<ChessPiece>>(2);
-		brd = vector<Cell*>(h * w);
+		brd = vector<Cell>(h * w);
 		castleMoves = { NONE_SELECTED, NONE_SELECTED };
-		for (int i = 0; i < h * w; i++) {
-			brd.at(i) = new Cell;
-			brd.at(i)->setChessPiece(new ChessPiece);
-		}
 		selected = NONE_SELECTED;
 		for (int j = 0; j < 2; j++) {
 			vector<ChessPiece*> backRow = { new Rook, new Knight(w), new Bishop, new Queen, new King, new Bishop, new Knight(w), new Rook };
@@ -84,12 +82,13 @@ public:
 					backPiece->switchSide();
 					pawn->switchSide();
 				}
-				brd.at(i + (j) * (h * w - w))->setChessPiece(backPiece);
-				brd.at(w + i + (h * (w - 3)) * j)->setChessPiece(pawn);
+				brd.at(i + (j) * (h * w - w)).setChessPiece(backPiece);
+				brd.at(w + i + (h * (w - 3)) * j).setChessPiece(pawn);
 			}
 		}
+		
 		for (int i = 0; i < h * w; i++) {
-			Cell& c = *brd.at(i);
+			Cell& c = brd.at(i);
 			bool whiteSquare = (i % 2 == i / h % 2);
 			c.setDefaultColor((whiteSquare) ? sf::Color::White : sf::Color::Black);
 			c.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
@@ -98,11 +97,6 @@ public:
 		}
 	}
 
-	~Board() {
-		for (int i = 0; i < brd.size(); i++) {
-			delete brd.at(i);
-		}
-	}
 
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const {
 		int mid = BOARD_DIM_IN_WINDOW / 2;
@@ -112,7 +106,7 @@ public:
 
 		// Pass to draw function in cells to draw active squares & pieces
 		for (int i = 0; i < brd.size(); i++) {
-			target.draw(*brd.at(i));
+			target.draw(brd.at(i));
 		}
 
 		// Draw captured pieces above/below board
@@ -133,36 +127,44 @@ public:
 	}
 
 	// Called when a tile is clicked on in the GUI
-	bool selectTile(int pos, int move) {
+	bool selectTile(int pos, int moveNum) {
+		int turn = moveNum % 2; 
+		curMoveNum = moveNum;
 		bool turnCompleted = false;
 		if (selected == NONE_SELECTED) {
-			ChessPiece& curPiece = brd.at(pos)->getChessPiece();
-			if (curPiece.isActive() && curPiece.getSide() == move) {
+			ChessPiece& curPiece = brd.at(pos).getChessPiece();
+			if (curPiece.isActive() && curPiece.getSide() == turn) {
 				selected = pos;
 				currentValidMoves = getPossibleMoves(selected, curPiece, true, curPiece);
 				toggleMoveHighlights(curPiece.getSide());
-				brd.at(selected)->toggleSelected();
+				brd.at(selected).toggleSelected();
 			}
 			
 		}
 		else {
 			// if selected is not none, then a piece is selected - attempt to move it
 			if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
-				ChessPiece oldPiece = brd.at(pos)->getChessPiece();
-				brd.at(selected)->movePiece(*brd.at(pos));
+				ChessPiece oldPiece = brd.at(pos).getChessPiece();
+				brd.at(selected).getChessPiece().onMove(abs(selected - pos), moveNum);
+				brd.at(selected).movePiece(brd.at(pos));
 				if (castleMoves.find(pos) != castleMoves.end()) {
 					bool rookRight = pos > selected;
 					int step = (rookRight) ? -1 : 1, rookPos = (rookRight) ? selected + 3 : selected - 4 ;
-					brd.at(rookPos)->movePiece(*brd.at(pos + step));
+					brd.at(rookPos).movePiece(brd.at(pos + step));
+				}
+				else if (pos == enPassantMove) {
+					int newIdx = pos + width - 2 * width * (brd.at(pos).getChessPiece().getSide() ^ 1);
+					oldPiece = brd.at(newIdx).getChessPiece();
+					brd.at(selected).movePiece(brd.at(newIdx));
 				}
 				if (oldPiece.isActive()) {
-					scores.at(move) += oldPiece.getValue();
-					captures.at(move).push_back(oldPiece);
+					scores.at(turn) += oldPiece.getValue();
+					captures.at(turn).push_back(oldPiece);
 				}
 ;				turnCompleted = true;
 			}
 			// clicking an invalid space will still cancel the move
-			brd.at(selected)->toggleSelected();
+			brd.at(selected).toggleSelected();
 			selected = NONE_SELECTED;
 			toggleMoveHighlights();
 			currentValidMoves.clear();
@@ -177,8 +179,8 @@ public:
 
 	void toggleMoveHighlights(int side = -1) {
 		for (int i : currentValidMoves) {
-  			sf::Color color = (!brd.at(i)->getChessPiece().isActive() || brd.at(i)->getChessPiece().getSide() == side) ? sf::Color::Green : sf::Color::Red;
-			brd.at(i)->toggleHighlight(color);
+  			sf::Color color = (!brd.at(i).getChessPiece().isActive() || brd.at(i).getChessPiece().getSide() == side) ? sf::Color::Green : sf::Color::Red;
+			brd.at(i).toggleHighlight(color);
 		}
 	}
 
@@ -188,7 +190,7 @@ public:
 		State gameState = NONE;
 		int opposingKingPos = (subPiece.isKing() && subPieceAt != NONE_SELECTED) * subPieceAt;
 		for (int i = 0; i < brd.size(); i++) {
-			ChessPiece& cur = brd.at(i)->getChessPiece();
+			ChessPiece& cur = brd.at(i).getChessPiece();
 			if (cur.isOnSide(sideFor) && i != subPieceAt) {
 				set<int> curMoves = getPossibleMoves(i, cur, false, subPiece, subPieceAt, removePieceFrom);
 				allMovesFor.insert(curMoves.begin(), curMoves.end());
@@ -203,7 +205,7 @@ public:
 		if (checkAll) {
 			bool noOpponentMoves = true;
 			for (int i = 0; i < brd.size() && noOpponentMoves; i++) {
-				ChessPiece& cur = brd.at(i)->getChessPiece();
+				ChessPiece& cur = brd.at(i).getChessPiece();
 				noOpponentMoves = !cur.isOnSide(sideFor ^ 1) || getPossibleMoves(i, cur, true, subPiece, subPieceAt, removePieceFrom).empty();
 			}
 			gameState = (noOpponentMoves) ? ((gameState == CHECK) ? CHECKMATE : STALEMATE) : gameState;
@@ -243,7 +245,7 @@ public:
 	}
 
 	vector<int> getNeighbors(int pos) {
-	vector<int> neighbors;
+		vector<int> neighbors;
 		for (int i = 0; i < 2; i++) {
 			int adj = pos - 1 + 2 * i;
 			if ((!i && pos % width != 0) || (i && pos % width != width - 1)) {
@@ -255,7 +257,7 @@ public:
 
 	void setCastleMoves(int kingPos) {
 		cout << kingPos << endl;
-		ChessPiece& king = brd.at(kingPos)->getChessPiece();
+		ChessPiece& king = brd.at(kingPos).getChessPiece();
 		vector<int> distances{ 3, 4 };
 		bool canCastle = king.canCastle();
 		bool inCheck = check(king.getSide() ^ 1, false, king) == CHECK;
@@ -273,10 +275,10 @@ public:
 	bool clearPathToRook(int pos, int step, int dist, int side) {
 		bool clearPath = true;
 		for (int i = pos + step; abs(pos - i) < dist && clearPath; i += step) {
-			clearPath = !brd.at(i)->getChessPiece().isActive();
+			clearPath = !brd.at(i).getChessPiece().isActive();
 		}
 		int end = pos + dist * step;
-		ChessPiece& endPiece = brd.at(end)->getChessPiece();
+		ChessPiece& endPiece = brd.at(end).getChessPiece();
 		return clearPath && endPiece.isOnSide(side) && endPiece.getName() == "rook";
 	}
 
@@ -311,21 +313,21 @@ public:
 		rangeMax = range * step;
 		prevLoc = pos;
 		while (bound1 > min && (abs(bound1 - pos) <= rangeMax)
-			&& (!((bound1 == subPieceAt) ? subPiece : brd.at(bound1)->getChessPiece()).isOnSide(side) || bound1 == removePieceFrom || bound1 == pos)
-			&& (!((prevLoc == subPieceAt) ? subPiece : brd.at(prevLoc)->getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
+			&& (!((bound1 == subPieceAt) ? subPiece : brd.at(bound1).getChessPiece()).isOnSide(side) || bound1 == removePieceFrom || bound1 == pos)
+			&& (!((prevLoc == subPieceAt) ? subPiece : brd.at(prevLoc).getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
 			prevLoc = bound1;
 			bound1 -= step;
 		}
 
 		prevLoc = pos;
 		while (bound2 < max && (abs(bound2 - pos) <= rangeMax)
-			&& (!((bound2 == subPieceAt) ? subPiece : brd.at(bound2)->getChessPiece()).isOnSide(side) || bound2 == removePieceFrom || bound2 == pos)
-			&& (!((prevLoc == subPieceAt) ? subPiece : brd.at(prevLoc)->getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
+			&& (!((bound2 == subPieceAt) ? subPiece : brd.at(bound2).getChessPiece()).isOnSide(side) || bound2 == removePieceFrom || bound2 == pos)
+			&& (!((prevLoc == subPieceAt) ? subPiece : brd.at(prevLoc).getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
 			prevLoc = bound2;
 			bound2 += step;
 		}
 		for (int i = bound1 + step; i < bound2; i += step) {
-			if (i != pos && !(verifyLegal && moveResultsInCheck(brd.at(pos)->getChessPiece(), i, pos))) {
+			if (i != pos && !(verifyLegal && moveResultsInCheck(brd.at(pos).getChessPiece(), i, pos))) {
 				validMoves.insert(i);
 			}
 		}
@@ -345,7 +347,7 @@ public:
 		for (int i : moveList) {
 			int newPos = pos + i;
 			pieceInRange = newPos >= 0 && newPos < height * width;
-			ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : brd.at(newPos)->getChessPiece();
+			ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : brd.at(newPos).getChessPiece();
 			if (pieceInRange && (newPos == removePieceFrom || !posPiece.isActive() 
 				|| (posPiece.getSide() != piece.getSide() && piece.canTakeStrictly()))
 				&& moveNotWrapped(pos, newPos) && !(verifyLegal && moveResultsInCheck(piece, newPos, pos))) {
@@ -357,11 +359,22 @@ public:
 			for (int i : takeMoves) {
 				int newPos = pos + i;
 				pieceInRange = newPos >= 0 && newPos < height * width;
-				ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : brd.at(newPos)->getChessPiece();
+				ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : brd.at(newPos).getChessPiece();
 				if (newPos >= 0 && newPos < height * width && posPiece.isActive()
 					&& posPiece.getSide() != piece.getSide() && moveNotWrapped(pos, newPos) && (newPos != removePieceFrom) 
 					&& !(verifyLegal && moveResultsInCheck(piece, newPos, pos))) {
 					moves.insert(newPos);
+				}
+			}
+		}
+		if (piece.isPawn()) {
+			vector<int> neighbors = getNeighbors(pos);
+			for (int i : neighbors) {
+				ChessPiece& neighbor = brd.at(i).getChessPiece();
+				if (neighbor.canBeEnPassanted(curMoveNum)) {
+					int idx = i - width + 2 * width * neighbor.getSide();
+					moves.insert(idx);
+					enPassantMove = idx;
 				}
 			}
 		}

@@ -21,7 +21,7 @@ public:
 		return true;
 	}
 
-	void onMove() override {
+	void onMove(int moveDiff, int moveNum) override {
 		castle = false;
 	}
 

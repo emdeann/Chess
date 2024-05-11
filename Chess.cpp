@@ -39,7 +39,7 @@ int main() {
                     int boardPos = (event.mouseButton.x / CELL_WIDTH) + (yAdj / CELL_WIDTH) * BOARD_WIDTH;
                     cout << boardPos << endl;
                     if (board.selectTile(boardPos, move)) {
-                        move ^= 1;
+                        move += 1;
                     }
                 }
             }
