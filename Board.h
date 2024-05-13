@@ -156,6 +156,7 @@ public:
 					int newIdx = pos + width - 2 * width * (brd.at(pos).getChessPiece().getSide() ^ 1);
 					oldPiece = brd.at(newIdx).getChessPiece();
 					brd.at(selected).movePiece(brd.at(newIdx));
+					enPassantMove = NONE_SELECTED;
 				}
 				if (oldPiece.isActive()) {
 					scores.at(turn) += oldPiece.getValue();
