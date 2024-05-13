@@ -22,15 +22,15 @@ bool inBoardRange(int x, int y) {
 
 void textSetup(sf::Text& txt, string s, sf::RenderWindow& window) {
     txt.setCharacterSize(48);
-    sf::FloatRect textRect = txt.getLocalBounds();
     txt.setString(s);
+    sf::FloatRect textRect = txt.getLocalBounds();
     txt.setOrigin(textRect.left + textRect.width / 2.0f,
         textRect.top + textRect.height / 2.0f);
     txt.setPosition(window.getSize().x / 2.f, window.getSize().y / 4.f);
 }
 
 void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move, sf::RenderWindow& window, 
-    Board& board, ostringstream& titleStr, sf::Text& titleText) {
+    Board& board, ostringstream& titleStr, sf::Text& titleText, WindowState& windowState) {
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         int yAdj = event.mouseButton.y - Y_OFFSET;
         if (inBoardRange(event.mouseButton.x, yAdj)) {
@@ -55,17 +55,25 @@ void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move,
         window.draw(board);
         break;
     case CHECKMATE:
-        window.clear();
-        titleStr << "Checkmate" << endl << ((winnerSide) ? "Black" : "White") << " Wins!";
-        textSetup(titleText, titleStr.str(), window);
-        window.draw(titleText);
-        break;
     case STALEMATE:
-        window.clear();
-        textSetup(titleText, "Stalemate :(", window);
-        window.draw(titleText);
+        windowState = END;
         break;
     }
+}
+
+void displayEndText(sf::RenderWindow& window, GameState& gameState, sf::Text& titleText, int winnerSide) {
+    window.clear(sf::Color::Black);
+    ostringstream titleStr;
+    string text;
+    if (gameState == CHECKMATE) {
+        titleStr << "Checkmate" << endl << ((winnerSide) ? "Black" : "White") << " Wins!";
+        text = titleStr.str();
+    }
+    else {
+        text = "Stalemate :(";
+    }
+    textSetup(titleText, text, window);
+    window.draw(titleText);
 }
 
 int main() {
@@ -91,8 +99,10 @@ int main() {
                 window.close();
             switch (windowState) {
             case GAME:
-                runGame(event, gameState, winnerSide, move, window, board, titleStr, titleText);
+                runGame(event, gameState, winnerSide, move, window, board, titleStr, titleText, windowState);
                 break;
+            case END:
+                displayEndText(window, gameState, titleText, winnerSide);
             }
             window.display();
         }
