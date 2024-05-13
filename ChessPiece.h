@@ -51,7 +51,6 @@ public:
 		if (activePiece) {
 			ostringstream fileName;
 			fileName << "Textures/" << ((side) ? "b" : "w") << "_" << name << ".png";
-			cout << "Loading " << fileName.str() << endl;
 			texture.loadFromFile(fileName.str());
 		}
 	}

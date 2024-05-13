@@ -20,7 +20,7 @@ using namespace std;
 const int NONE_SELECTED = -10;
 const int Y_OFFSET = 128;
 const int BOARD_DIM_IN_WINDOW = 512;
-const enum State {NONE, CHECK, CHECKMATE, STALEMATE, NO_TURN};
+const enum GameState {NONE, CHECK, CHECKMATE, STALEMATE, NO_TURN};
 
 
 class Board : public sf::Drawable {
@@ -127,10 +127,10 @@ public:
 	}
 
 	// Called when a tile is clicked on in the GUI
-	State selectTile(int pos, int moveNum) {
+	GameState selectTile(int pos, int moveNum) {
 		int turn = moveNum % 2; 
 		curMoveNum = moveNum;
-		State turnState = NO_TURN;
+		GameState turnState = NO_TURN;
 		if (selected == NONE_SELECTED) {
 			ChessPiece& curPiece = brd.at(pos).getChessPiece();
 			if (curPiece.isActive() && curPiece.getSide() == turn) {
@@ -186,9 +186,9 @@ public:
 	}
 
 	// Determine if a side has check, checkmate, or stalemate | Args with default arguments are used when verifying legality of potential moves
-	State check(int sideFor, bool checkAll, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+	GameState check(int sideFor, bool checkAll, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> allMovesFor;
-		State gameState = NONE;
+		GameState gameState = NONE;
 		int opposingKingPos = (subPiece.isKing() && subPieceAt != NONE_SELECTED) * subPieceAt;
 		for (int i = 0; i < brd.size(); i++) {
 			ChessPiece& cur = brd.at(i).getChessPiece();
