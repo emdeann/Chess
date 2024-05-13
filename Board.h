@@ -20,7 +20,7 @@ using namespace std;
 const int NONE_SELECTED = -10;
 const int Y_OFFSET = 128;
 const int BOARD_DIM_IN_WINDOW = 512;
-const enum State {NONE, CHECK, CHECKMATE, STALEMATE};
+const enum State {NONE, CHECK, CHECKMATE, STALEMATE, NO_TURN};
 
 
 class Board : public sf::Drawable {
@@ -127,10 +127,10 @@ public:
 	}
 
 	// Called when a tile is clicked on in the GUI
-	bool selectTile(int pos, int moveNum) {
+	State selectTile(int pos, int moveNum) {
 		int turn = moveNum % 2; 
 		curMoveNum = moveNum;
-		bool turnCompleted = false;
+		State turnState = NO_TURN;
 		if (selected == NONE_SELECTED) {
 			ChessPiece& curPiece = brd.at(pos).getChessPiece();
 			if (curPiece.isActive() && curPiece.getSide() == turn) {
@@ -162,7 +162,8 @@ public:
 					scores.at(turn) += oldPiece.getValue();
 					captures.at(turn).push_back(oldPiece);
 				}
-				turnCompleted = true;
+				ChessPiece fakeSub = ChessPiece();
+				turnState = check(brd.at(pos).getChessPiece().getSide(), true, fakeSub);
 			}
 			// clicking an invalid space will still cancel the move 
 			brd.at(selected).toggleSelected(); 
@@ -172,9 +173,8 @@ public:
 
 		}
 
-		return turnCompleted;
+		return turnState;
 
-		
 	}
 
 
@@ -257,7 +257,6 @@ public:
 	}
 
 	void setCastleMoves(int kingPos) {
-		cout << kingPos << endl;
 		ChessPiece& king = brd.at(kingPos).getChessPiece();
 		vector<int> distances{ 3, 4 };
 		bool canCastle = king.canCastle();
@@ -372,7 +371,7 @@ public:
 			vector<int> neighbors = getNeighbors(pos);
 			for (int i : neighbors) {
 				ChessPiece& neighbor = brd.at(i).getChessPiece();
-				if (neighbor.canBeEnPassanted(curMoveNum)) {
+				if (neighbor.getSide() != piece.getSide() && neighbor.canBeEnPassanted(curMoveNum)) {
 					int idx = i - width + 2 * width * neighbor.getSide();
 					moves.insert(idx);
 					enPassantMove = idx;
