@@ -3,6 +3,7 @@
 #include <string>
 #include <sstream>
 #include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 using namespace std;
 
 const int MAX_RANGE = 8;
@@ -16,6 +17,8 @@ protected:
 	vector<int> strictMoves; // int offsets from position instead of directions where needed (ie knight)
 	string name;
 	sf::Texture texture;
+	sf::Sound moveSound;
+	sf::SoundBuffer buffer;
 
 public:
 	ChessPiece() {
@@ -35,6 +38,11 @@ public:
 		name = n;
 		side = 0;
 		activePiece = true;
+
+		if (!buffer.loadFromFile("move.mp3")) {
+			throw invalid_argument("bad file");
+		}
+		moveSound.setBuffer(buffer);
 	}
 
 
@@ -50,6 +58,7 @@ public:
 
 	virtual void onMove(int moveDiff, int moveNum) {
 		// called every time the piece is moved
+		moveSound.play();
 	}
 
 	virtual void switchSide() {

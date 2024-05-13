@@ -5,14 +5,6 @@
 
 using namespace std;
 
-const wstring RESET = L"\033[0m";
-const wstring BLACK = L"\033[30m";
-const wstring RED = L"\033[31m";
-const wstring GREEN = L"\033[32m";
-const wstring YELLOW = L"\033[33m";
-const wstring BLUE = L"\033[34m";
-const wstring MAGENTA = L"\033[35m";
-
 const int CELL_WIDTH = 64;
 const float DEFAULT_ITEM_SIZE = 0.375;
 

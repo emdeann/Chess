@@ -24,6 +24,7 @@ public:
 	}
 
 	void onMove(int moveDiff, int moveNum) override {
+		ChessPiece::onMove(moveDiff, moveNum);
 		if (!moves++) {
 			if (moveDiff == 2 * boardWidth) {
 				doubleMoveTurn = moveNum;

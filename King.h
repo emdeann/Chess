@@ -15,6 +15,7 @@ public:
 	}
 
 	void onMove(int moveDiff, int moveNum) override {
+		ChessPiece::onMove(moveDiff, moveNum);
 		castle = false;
 	}
 
