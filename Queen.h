@@ -4,12 +4,7 @@ using namespace std;
 
 class Queen : public ChessPiece {
 public:
-	Queen() {
-		ch = L"\u2655";
-		name = "queen";
-		activePiece = true;
-		validDirections = { true, true, true};
-		range = MAX_RANGE;
-		value = 9;
+	Queen() : ChessPiece(MAX_RANGE, 9, { true, true, true }, "queen") {
+
 	}
 };

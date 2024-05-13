@@ -6,14 +6,7 @@ class King : public ChessPiece {
 private:
 	bool castle;
 public:
-	King() {
-		ch = L"\u2654";
-		activePiece = true;
-		validDirections = { true, true, true };
-		range = 1;
-		name = "king";
-		texture.loadFromFile("Textures/w_king.png");
-		value = 0;
+	King() : ChessPiece(1, 0, { true, true, true }, "king") {	
 		castle = true;
 	}
 

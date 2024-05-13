@@ -161,10 +161,10 @@ public:
 					scores.at(turn) += oldPiece.getValue();
 					captures.at(turn).push_back(oldPiece);
 				}
-;				turnCompleted = true;
+				turnCompleted = true;
 			}
-			// clicking an invalid space will still cancel the move
-			brd.at(selected).toggleSelected();
+			// clicking an invalid space will still cancel the move 
+			brd.at(selected).toggleSelected(); 
 			selected = NONE_SELECTED;
 			toggleMoveHighlights();
 			currentValidMoves.clear();

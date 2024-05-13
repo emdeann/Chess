@@ -9,7 +9,6 @@ const int MAX_RANGE = 8;
 
 class ChessPiece {
 protected:
-	wstring ch;
 	vector<bool> validDirections; // format: {canMoveHorizontal, canMoveVertical, canMoveDiagonal}
 	vector<int> takeMoves; 
 	int range, side, value; // 0: white 1: black
@@ -20,7 +19,6 @@ protected:
 
 public:
 	ChessPiece() {
-		ch = L"-";
 		side = 0;
 		range = 0;
 		value = 0;
@@ -29,9 +27,17 @@ public:
 		strictCapture = false;
 		specialTakeMoves = false;
 	}
-	wstring getChar() {
-		return ch;
+
+	ChessPiece(int rng, int val, vector<bool> perms, string n) {
+		range = rng;
+		value = val;
+		validDirections = perms;
+		name = n;
+		side = 0;
+		activePiece = true;
 	}
+
+
 
 	void loadTexture() {
 		if (activePiece) {

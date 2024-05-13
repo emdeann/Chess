@@ -12,11 +12,8 @@ private:
 		}
 	}
 public:
-	Pawn(int w) {
-		ch = L"\u2659";
-		name = "pawn";
+	Pawn(int w) : ChessPiece(1, 1, { false, false, false }, "pawn") {
 		boardWidth = w;
-		activePiece = true;
 		strictMotion = true;
 		specialTakeMoves = true;
 		lastMoveDiff = 0;
@@ -24,7 +21,6 @@ public:
 		doubleMoveTurn = -1;
 		takeMoves = { w - 1, w + 1 };
 		strictMoves = { w, 2 * w};
-		value = 1;
 	}
 
 	void onMove(int moveDiff, int moveNum) override {
