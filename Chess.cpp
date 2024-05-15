@@ -16,6 +16,10 @@ const int BOARD_HEIGHT = 8;
 const int BOARD_WIDTH = 8;
 const int WINDOW_WIDTH = 512;
 const int WINDOW_HEIGHT = 768;
+const float BUTTON_SIZE = 128;
+const int BUTTON_OUTLINE_WIDTH = 5;
+const int BUTTON_CHARSIZE = 32;
+const int TITLE_CHARSIZE = 48;
 enum WindowState {START, GAME, END};
 
 bool inBoardRange(int x, int y) {
@@ -23,7 +27,7 @@ bool inBoardRange(int x, int y) {
 }
 
 void textSetup(sf::Text& txt, string s, sf::RenderWindow& window) {
-    txt.setCharacterSize(48);
+    txt.setCharacterSize(TITLE_CHARSIZE);
     txt.setString(s);
     sf::FloatRect textRect = txt.getLocalBounds();
     txt.setOrigin(textRect.left + textRect.width / 2.0f,
@@ -118,10 +122,10 @@ int main() {
     buttonText.setFont(font);
     window.setVerticalSyncEnabled(true);
     Board board(BOARD_HEIGHT, BOARD_WIDTH);
-    buttonText.setCharacterSize(32);
+    buttonText.setCharacterSize(BUTTON_CHARSIZE);
     buttonText.setString("Start Game");
-    setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, 128.f),
-        sf::Vector2f(window.getSize().x / 8.f, window.getSize().y / 2.f), sf::Color::Black, 5, buttonText);
+    setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, BUTTON_SIZE),
+        sf::Vector2f(window.getSize().x / 8.f, window.getSize().y / 2.f), sf::Color::Black, BUTTON_OUTLINE_WIDTH, buttonText);
     
 
     while (window.isOpen()) {
