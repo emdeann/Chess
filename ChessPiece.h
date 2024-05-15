@@ -38,11 +38,9 @@ public:
 		name = n;
 		side = 0;
 		activePiece = true;
-
-		if (!buffer.loadFromFile("move.mp3")) {
-			throw invalid_argument("bad file");
-		}
-		moveSound.setBuffer(buffer);
+		strictMotion = false;
+		strictCapture = false;
+		specialTakeMoves = false;
 	}
 
 
@@ -53,6 +51,11 @@ public:
 			fileName << "Textures/" << ((side) ? "b" : "w") << "_" << name << ".png";
 			texture.loadFromFile(fileName.str());
 		}
+	}
+
+	void setSound(sf::SoundBuffer& buff) {
+		buffer = buff;
+		moveSound.setBuffer(buff);
 	}
 
 	virtual void onMove(int moveDiff, int moveNum) {

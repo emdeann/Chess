@@ -31,7 +31,7 @@ private:
 	vector<vector<ChessPiece>> captures;
 	int selected;
 	set<int> currentValidMoves, castleMoves;
-
+	sf::SoundBuffer moveSoundBuffer;
 
 	// Helpers
 
@@ -73,11 +73,14 @@ public:
 		brd = vector<Cell>(h * w);
 		castleMoves = { NONE_SELECTED, NONE_SELECTED };
 		selected = NONE_SELECTED;
+		moveSoundBuffer.loadFromFile("move.mp3");
 		for (int j = 0; j < 2; j++) {
 			vector<ChessPiece*> backRow = { new Rook, new Knight(w), new Bishop, new Queen, new King, new Bishop, new Knight(w), new Rook };
 			for (int i = 0; i < w; i++) {
 				ChessPiece* backPiece = backRow.at(i);
 				Pawn* pawn = new Pawn(w);
+				backPiece->setSound(moveSoundBuffer);
+				pawn->setSound(moveSoundBuffer);
 				if (j) {
 					backPiece->switchSide();
 					pawn->switchSide();
