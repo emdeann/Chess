@@ -14,6 +14,8 @@ using namespace std;
 
 const int BOARD_HEIGHT = 8;
 const int BOARD_WIDTH = 8;
+const int WINDOW_WIDTH = 512;
+const int WINDOW_HEIGHT = 768;
 enum WindowState {START, GAME, END};
 
 bool inBoardRange(int x, int y) {
@@ -30,7 +32,7 @@ void textSetup(sf::Text& txt, string s, sf::RenderWindow& window) {
 }
 
 void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move, sf::RenderWindow& window, 
-    Board& board, ostringstream& titleStr, sf::Text& titleText, WindowState& windowState) {
+    Board& board, ostringstream& titleStr, sf::Text& titleText, WindowState& windowState, sf::Text& buttonText) {
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         int yAdj = event.mouseButton.y - Y_OFFSET;
         if (inBoardRange(event.mouseButton.x, yAdj)) {
@@ -56,21 +58,29 @@ void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move,
         break;
     case CHECKMATE:
     case STALEMATE:
+        buttonText.setString("Play Again?");
         windowState = END;
         break;
     }
 }
 
-void displayEndText(sf::RenderWindow& window, GameState& gameState, sf::Text& titleText, int winnerSide) {
+void displayTitleText(sf::RenderWindow& window, GameState& gameState, sf::Text& titleText, int winnerSide = -1) {
     ostringstream titleStr;
     string text;
     window.clear(sf::Color::Black);
-    if (gameState == CHECKMATE) {
+    switch (gameState) {
+    case NONE:
+    case NO_TURN:
+    case CHECK:
+        text = "2-P Chess!";
+        break;
+    case CHECKMATE:
         titleStr << "Checkmate" << endl << ((winnerSide) ? "Black" : "White") << " Wins!";
         text = titleStr.str();
-    }
-    else {
+        break;
+    case STALEMATE:
         text = "Stalemate :(";
+        break;
     }
     textSetup(titleText, text, window);
     window.draw(titleText);
@@ -95,23 +105,23 @@ void setupButton(sf::RectangleShape& rect, sf::Vector2f size, sf::Vector2f pos, 
 
 int main() {
     int move = 0, winnerSide = -1;
-    WindowState windowState = GAME;
+    WindowState windowState = START;
     GameState gameState = NONE;
-    sf::RenderWindow window(sf::VideoMode(512, 768), "Chess", sf::Style::Titlebar | sf::Style::Close);
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Chess", sf::Style::Titlebar | sf::Style::Close);
     sf::Font font;
     sf::Text titleText;
-    sf::Text replayText;
+    sf::Text buttonText;
     sf::RectangleShape replayButton;
     ostringstream titleStr;
     font.loadFromFile("zig.ttf");
     titleText.setFont(font);
-    replayText.setFont(font);
+    buttonText.setFont(font);
     window.setVerticalSyncEnabled(true);
     Board board(BOARD_HEIGHT, BOARD_WIDTH);
-    replayText.setCharacterSize(32);
-    replayText.setString("Play Again");
+    buttonText.setCharacterSize(32);
+    buttonText.setString("Start Game");
     setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, 128.f),
-        sf::Vector2f(window.getSize().x / 8.f, window.getSize().y / 2.f), sf::Color::Black, 5, replayText);
+        sf::Vector2f(window.getSize().x / 8.f, window.getSize().y / 2.f), sf::Color::Black, 5, buttonText);
     
 
     while (window.isOpen()) {
@@ -123,13 +133,23 @@ int main() {
             if (event.type == sf::Event::Closed)
                 window.close();
             switch (windowState) {
+            case START:
+                displayTitleText(window, gameState, titleText, winnerSide);
+                window.draw(replayButton);
+                window.draw(buttonText);
+                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
+                    if (replayButton.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                        windowState = GAME;
+                    }
+                }
+                break;
             case GAME:
-                runGame(event, gameState, winnerSide, move, window, board, titleStr, titleText, windowState);
+                runGame(event, gameState, winnerSide, move, window, board, titleStr, titleText, windowState, buttonText);
                 break;
             case END:
-                displayEndText(window, gameState, titleText, winnerSide);
+                displayTitleText(window, gameState, titleText, winnerSide);
                 window.draw(replayButton);
-                window.draw(replayText);
+                window.draw(buttonText);
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     if (replayButton.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
                         board = Board(BOARD_WIDTH, BOARD_HEIGHT);
