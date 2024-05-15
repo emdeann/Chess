@@ -35,11 +35,41 @@ void textSetup(sf::Text& txt, string s, sf::RenderWindow& window) {
     txt.setPosition(window.getSize().x / 2.f, window.getSize().y / 4.f);
 }
 
+void setPlaceHolderPieces(vector<Cell>& v, int promoSide = 0) {
+    vector<ChessPiece*> promotionPieces = { new Rook, new Bishop, new Knight(BOARD_WIDTH), new Queen };
+    for (int i = 0; i < promotionPieces.size(); i++) {
+        Cell& cur = v.at(i);
+        if (promoSide) {
+            promotionPieces.at(i)->switchSide();
+        }
+        cur.setChessPiece(promotionPieces.at(i));
+        cur.setPos(sf::Vector2f(WINDOW_WIDTH / 2 + CELL_WIDTH * (i - 2), CELL_WIDTH + (BOARD_DIM_IN_WINDOW + CELL_WIDTH) * !promoSide));
+    }
+}
+
 void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move, sf::RenderWindow& window, 
-    Board& board, ostringstream& titleStr, sf::Text& titleText, WindowState& windowState, sf::Text& buttonText) {
+    Board& board, ostringstream& titleStr, sf::Text& titleText, WindowState& windowState, sf::Text& buttonText, 
+    vector<Cell>& promoCells, bool& holderPiecesSet) {
+    bool promote = board.isDoPromotion();
+    if (promote && !holderPiecesSet) {
+        setPlaceHolderPieces(promoCells, board.getPromotionSide());
+        holderPiecesSet = true;
+    }
     if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
         int yAdj = event.mouseButton.y - Y_OFFSET;
-        if (inBoardRange(event.mouseButton.x, yAdj)) {
+        int selectedPos = NONE_SELECTED;
+        if (promote) {
+            for (int i = 0; i < promoCells.size() && selectedPos == NONE_SELECTED; i++) {
+                if (promoCells.at(i).getRect().getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                    selectedPos = i;
+                }
+            }
+            if (selectedPos != NONE_SELECTED) {
+                board.setPromotedPiece(promoCells.at(selectedPos));
+                holderPiecesSet = false;
+            }
+        }
+        else if (inBoardRange(event.mouseButton.x, yAdj)) {
             int boardPos = (event.mouseButton.x / CELL_WIDTH) + (yAdj / CELL_WIDTH) * BOARD_WIDTH;
             GameState curState = board.selectTile(boardPos, move);
             if (curState != NO_TURN) {
@@ -53,12 +83,14 @@ void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move,
     }
     switch (gameState) {
     case CHECK:
-        window.clear(sf::Color::Red);
-        window.draw(board);
-        break;
     case NONE:
-        window.clear(sf::Color::Black);
+        window.clear((gameState == CHECK) ? sf::Color::Red : sf::Color::Black);
         window.draw(board);
+        if (promote) {
+            for (Cell& c : promoCells) {
+                window.draw(c);
+            }
+        }
         break;
     case CHECKMATE:
     case STALEMATE:
@@ -109,6 +141,8 @@ void setupButton(sf::RectangleShape& rect, sf::Vector2f size, sf::Vector2f pos, 
 
 int main() {
     int move = 0, winnerSide = -1;
+    vector<Cell> promotionCells(4);
+    bool holderPiecesSet = false;
     WindowState windowState = START;
     GameState gameState = NONE;
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Chess", sf::Style::Titlebar | sf::Style::Close);
@@ -126,7 +160,12 @@ int main() {
     buttonText.setString("Start Game");
     setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, BUTTON_SIZE),
         sf::Vector2f(window.getSize().x / 8.f, window.getSize().y / 2.f), sf::Color::Black, BUTTON_OUTLINE_WIDTH, buttonText);
-    
+    setPlaceHolderPieces(promotionCells);
+    for (int i = 0; i < promotionCells.size(); i++) {
+        Cell& cur = promotionCells.at(i);
+        cur.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
+        cur.setDefaultColor(sf::Color::Cyan);
+    }
 
     while (window.isOpen()) {
 
@@ -148,7 +187,8 @@ int main() {
                 }
                 break;
             case GAME:
-                runGame(event, gameState, winnerSide, move, window, board, titleStr, titleText, windowState, buttonText);
+                runGame(event, gameState, winnerSide, move, window, board, titleStr, titleText, 
+                    windowState, buttonText, promotionCells, holderPiecesSet);
                 break;
             case END:
                 displayTitleText(window, gameState, titleText, winnerSide);

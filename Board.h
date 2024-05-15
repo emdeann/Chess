@@ -32,6 +32,8 @@ private:
 	int selected;
 	set<int> currentValidMoves, castleMoves;
 	sf::SoundBuffer moveSoundBuffer;
+	bool doPromotion;
+	int promotionPos, promotionSide;
 
 	// Helpers
 
@@ -73,6 +75,7 @@ public:
 		brd = vector<Cell>(h * w);
 		castleMoves = { NONE_SELECTED, NONE_SELECTED };
 		selected = NONE_SELECTED;
+		promotionPos = NONE_SELECTED;
 		moveSoundBuffer.loadFromFile("move.mp3");
 		for (int j = 0; j < 2; j++) {
 			vector<ChessPiece*> backRow = { new Rook, new Knight(w), new Bishop, new Queen, new King, new Bishop, new Knight(w), new Rook };
@@ -96,7 +99,6 @@ public:
 			c.setDefaultColor((whiteSquare) ? sf::Color::White : sf::Color::Black);
 			c.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
 			c.setPos(sf::Vector2f(CELL_WIDTH * (i % w), CELL_WIDTH * (i / h) + Y_OFFSET));
-			c.getChessPiece().loadTexture();
 		}
 	}
 
@@ -148,7 +150,8 @@ public:
 			// if selected is not none, then a piece is selected - attempt to move it
 			if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
 				ChessPiece oldPiece = brd.at(pos).getChessPiece();
-				brd.at(selected).getChessPiece().onMove(abs(selected - pos), moveNum);
+				ChessPiece& selectedPiece = brd.at(selected).getChessPiece();
+				selectedPiece.onMove(abs(selected - pos), moveNum);
 				brd.at(selected).movePiece(brd.at(pos));
 				if (castleMoves.find(pos) != castleMoves.end()) {
 					bool rookRight = pos > selected;
@@ -165,8 +168,10 @@ public:
 					scores.at(turn) += oldPiece.getValue();
 					captures.at(turn).push_back(oldPiece);
 				}
-				ChessPiece fakeSub = ChessPiece();
-				turnState = check(brd.at(pos).getChessPiece().getSide(), true, fakeSub);
+				turnState = check(brd.at(pos).getChessPiece().getSide(), true, oldPiece);
+				doPromotion = shouldPromote(selectedPiece, pos);
+				promotionPos = (doPromotion) ? pos : NONE_SELECTED;
+		
 			}
 			// clicking an invalid space will still cancel the move 
 			brd.at(selected).toggleSelected(); 
@@ -178,6 +183,11 @@ public:
 
 		return turnState;
 
+	}
+
+	bool shouldPromote(ChessPiece& piece, int pos) {
+		return piece.isPawn() && ((!piece.getSide() && (pos / height) == height - 1) ||
+			(piece.getSide() && !(pos / height)));
 	}
 
 
@@ -383,5 +393,20 @@ public:
 		}
 		return moves;
 	}
+
+	bool isDoPromotion() {
+		return doPromotion;
+	}
+	int getPromotionSide() {
+		return brd.at(promotionPos).getChessPiece().getSide();
+	}
+
+	void setPromotedPiece(Cell& cell) {
+		cell.getChessPiece().setSound(moveSoundBuffer);
+		cell.movePiece(brd.at(promotionPos));
+		doPromotion = false;
+		promotionPos = NONE_SELECTED;
+	}
+
 
 };

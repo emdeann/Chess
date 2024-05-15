@@ -41,6 +41,7 @@ public:
 		strictMotion = false;
 		strictCapture = false;
 		specialTakeMoves = false;
+		loadTexture();
 	}
 
 

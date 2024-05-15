@@ -69,6 +69,10 @@ public:
 		cellRect.setPosition(vec);
 	}
 
+	sf::RectangleShape& getRect() {
+		return cellRect;
+	}
+
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const {
 		target.draw(cellRect);
 		if (piece->isActive()) {
