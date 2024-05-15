@@ -355,16 +355,19 @@ public:
 	// Used for pieces with different movement patterns (pawns, knights)
 	set<int> getStrictMoves(int pos, ChessPiece& piece, bool verifyLegal, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> moves;
-		bool pieceInRange;
+		bool pieceInRange, continueChecking = true;
 		vector<int> moveList = piece.getStrictMoves();
-		for (int i : moveList) {
-			int newPos = pos + i;
+		for (int i = 0; i < moveList.size() && continueChecking; i++) {
+			int newPos = pos + moveList.at(i);
 			pieceInRange = newPos >= 0 && newPos < height * width;
 			ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : brd.at(newPos).getChessPiece();
 			if (pieceInRange && (newPos == removePieceFrom || !posPiece.isActive() 
 				|| (posPiece.getSide() != piece.getSide() && piece.canTakeStrictly()))
 				&& moveNotWrapped(pos, newPos) && !(verifyLegal && moveResultsInCheck(piece, newPos, pos))) {
 				moves.insert(newPos);
+			}
+			else {
+				continueChecking = !piece.isPawn();
 			}
 		}
 		if (piece.hasSpecialTakeMoves()) {
