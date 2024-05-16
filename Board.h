@@ -66,7 +66,7 @@ private:
 
 
 public:
-	Board(int h, int w) {
+	Board(int h, int w, sf::SoundBuffer& moveSound) {
 		height = h;
 		width = w;
 		curMoveNum = 0;
@@ -75,8 +75,10 @@ public:
 		brd = vector<Cell>(h * w);
 		castleMoves = { NONE_SELECTED, NONE_SELECTED };
 		selected = NONE_SELECTED;
-		promotionPos = NONE_SELECTED;
-		moveSoundBuffer.loadFromFile("move.mp3");
+		promotionPos = NONE_SELECTED, promotionSide = -1;
+		enPassantMove = NONE_SELECTED;
+		doPromotion = false;
+		moveSoundBuffer = sf::SoundBuffer(moveSound);
 		for (int j = 0; j < 2; j++) {
 			vector<ChessPiece*> backRow = { new Rook, new Knight(w), new Bishop, new Queen, new King, new Bishop, new Knight(w), new Rook };
 			for (int i = 0; i < w; i++) {
@@ -88,7 +90,7 @@ public:
 					backPiece->switchSide();
 					pawn->switchSide();
 				}
-				brd.at(i + (j) * (h * w - w)).setChessPiece(backPiece);
+				brd.at(i + j * (h * w - w)).setChessPiece(backPiece);
 				brd.at(w + i + (h * (w - 3)) * j).setChessPiece(pawn);
 			}
 		}

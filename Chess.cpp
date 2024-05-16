@@ -122,8 +122,8 @@ void displayTitleText(sf::RenderWindow& window, GameState& gameState, sf::Text& 
     window.draw(titleText);
 }
 
-void resetGame(Board& board, int& move, int& winnerSide, GameState& gameState, WindowState& windowState) {
-    board = Board(BOARD_WIDTH, BOARD_HEIGHT);
+void resetGame(Board& board, int& move, int& winnerSide, GameState& gameState, WindowState& windowState, sf::SoundBuffer& sound) {
+    board = Board(BOARD_WIDTH, BOARD_HEIGHT, sound);
     move = 0;
     winnerSide = -1;
     gameState = NONE;
@@ -142,8 +142,10 @@ void setupButton(sf::RectangleShape& rect, sf::Vector2f size, sf::Vector2f pos, 
 int main() {
     int move = 0, winnerSide = -1;
     vector<Cell> promotionCells(4);
-    bool holderPiecesSet = false;
+    bool holderPiecesSet = false, winSoundPlayed = false;
     WindowState windowState = START;
+    sf::SoundBuffer moveSoundBuffer, winSoundBuffer;
+    sf::Sound winSound;
     GameState gameState = NONE;
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Chess", sf::Style::Titlebar | sf::Style::Close);
     sf::Font font;
@@ -151,11 +153,14 @@ int main() {
     sf::Text buttonText;
     sf::RectangleShape replayButton;
     ostringstream titleStr;
+    moveSoundBuffer.loadFromFile("move.mp3");
+    cout << winSoundBuffer.loadFromFile("win.wav") << endl;
+    winSound.setBuffer(winSoundBuffer);
     font.loadFromFile("zig.ttf");
     titleText.setFont(font);
     buttonText.setFont(font);
     window.setVerticalSyncEnabled(true);
-    Board board(BOARD_HEIGHT, BOARD_WIDTH);
+    Board board(BOARD_HEIGHT, BOARD_WIDTH, moveSoundBuffer);
     buttonText.setCharacterSize(BUTTON_CHARSIZE);
     buttonText.setString("Start Game");
     setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, BUTTON_SIZE),
@@ -192,12 +197,16 @@ int main() {
                 break;
             case END:
                 displayTitleText(window, gameState, titleText, winnerSide);
+                if (!winSoundPlayed) {
+                    winSound.play();
+                    winSoundPlayed = true;
+                }
                 window.draw(replayButton);
                 window.draw(buttonText);
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     if (replayButton.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
-                        board = Board(BOARD_WIDTH, BOARD_HEIGHT);
-                        resetGame(board, move, winnerSide, gameState, windowState);
+                        resetGame(board, move, winnerSide, gameState, windowState, moveSoundBuffer);
+                        winSoundPlayed = false;
                     }
                 }
             }

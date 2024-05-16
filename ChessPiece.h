@@ -17,8 +17,8 @@ protected:
 	vector<int> strictMoves; // int offsets from position instead of directions where needed (ie knight)
 	string name;
 	sf::Texture texture;
-	sf::Sound moveSound;
 	sf::SoundBuffer buffer;
+	sf::Sound moveSound;
 
 public:
 	ChessPiece() {
@@ -55,8 +55,8 @@ public:
 	}
 
 	void setSound(sf::SoundBuffer& buff) {
-		buffer = buff;
-		moveSound.setBuffer(buff);
+		buffer = sf::SoundBuffer(buff);
+		moveSound.setBuffer(buffer);
 	}
 
 	virtual void onMove(int moveDiff, int moveNum) {
