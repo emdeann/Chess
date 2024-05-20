@@ -28,6 +28,7 @@ private:
 	int height, width, curMoveNum, enPassantMove;
 	vector<Cell> brd;
 	vector<int> scores;
+	vector<sf::Text> scoreText;
 	vector<vector<ChessPiece>> captures;
 	int selected;
 	set<int> currentValidMoves, castleMoves;
@@ -66,11 +67,12 @@ private:
 
 
 public:
-	Board(int h, int w, sf::SoundBuffer& moveSound) {
+	Board(int h, int w, sf::SoundBuffer& moveSound, sf::Font& textFont) {
 		height = h;
 		width = w;
 		curMoveNum = 0;
 		scores = vector<int>(2);
+		scoreText = vector<sf::Text>(2);
 		captures = vector<vector<ChessPiece>>(2);
 		brd = vector<Cell>(h * w);
 		castleMoves = { NONE_SELECTED, NONE_SELECTED };
@@ -102,6 +104,19 @@ public:
 			c.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
 			c.setPos(sf::Vector2f(CELL_WIDTH * (i % w), CELL_WIDTH * (i / h) + Y_OFFSET));
 		}
+
+		for (int i = 0; i < scoreText.size(); i++) {
+			sf::Text& t = scoreText.at(i);
+			t.setCharacterSize(24);
+			t.setFont(textFont);
+			t.setString("Score: 0");
+			sf::FloatRect textRect = t.getLocalBounds();
+			t.setOrigin(textRect.left + textRect.width / 2.0f,
+				textRect.top + textRect.height / 2.0f);
+			t.setPosition(sf::Vector2f(BOARD_DIM_IN_WINDOW / 4.f, Y_OFFSET / 2.f + (BOARD_DIM_IN_WINDOW + Y_OFFSET) * i));
+		
+		}
+		
 	}
 
 
@@ -130,6 +145,9 @@ public:
 				pieceSprite.setPosition(mid + CELL_WIDTH/4 + betweenCaptures * (j % piecesInRow), betweenCaptures + (BOARD_DIM_IN_WINDOW + Y_OFFSET) * i + betweenCaptures * (j/piecesInRow));
 				target.draw(pieceSprite);
 			}
+		}
+		for (int i = 0; i < scores.size(); i++) {
+			target.draw(scoreText.at(i));
 		}
 	}
 
@@ -168,6 +186,9 @@ public:
 				}
 				if (oldPiece.isActive()) {
 					scores.at(turn) += oldPiece.getValue();
+					ostringstream text;
+					text << "Score: " << scores.at(turn);
+					scoreText.at(turn).setString(text.str());
 					captures.at(turn).push_back(oldPiece);
 				}
 				turnState = check(brd.at(pos).getChessPiece().getSide(), true, oldPiece);

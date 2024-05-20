@@ -122,8 +122,8 @@ void displayTitleText(sf::RenderWindow& window, GameState& gameState, sf::Text& 
     window.draw(titleText);
 }
 
-void resetGame(Board& board, int& move, int& winnerSide, GameState& gameState, WindowState& windowState, sf::SoundBuffer& sound) {
-    board = Board(BOARD_WIDTH, BOARD_HEIGHT, sound);
+void resetGame(Board& board, int& move, int& winnerSide, GameState& gameState, WindowState& windowState, sf::SoundBuffer& sound, sf::Font font) {
+    board = Board(BOARD_WIDTH, BOARD_HEIGHT, sound, font);
     move = 0;
     winnerSide = -1;
     gameState = NONE;
@@ -154,13 +154,13 @@ int main() {
     sf::RectangleShape replayButton;
     ostringstream titleStr;
     moveSoundBuffer.loadFromFile("move.mp3");
-    cout << winSoundBuffer.loadFromFile("win.wav") << endl;
+    winSoundBuffer.loadFromFile("win.wav");
     winSound.setBuffer(winSoundBuffer);
     font.loadFromFile("zig.ttf");
     titleText.setFont(font);
     buttonText.setFont(font);
     window.setVerticalSyncEnabled(true);
-    Board board(BOARD_HEIGHT, BOARD_WIDTH, moveSoundBuffer);
+    Board board(BOARD_HEIGHT, BOARD_WIDTH, moveSoundBuffer, font);
     buttonText.setCharacterSize(BUTTON_CHARSIZE);
     buttonText.setString("Start Game");
     setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, BUTTON_SIZE),
@@ -205,7 +205,7 @@ int main() {
                 window.draw(buttonText);
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     if (replayButton.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
-                        resetGame(board, move, winnerSide, gameState, windowState, moveSoundBuffer);
+                        resetGame(board, move, winnerSide, gameState, windowState, moveSoundBuffer, font);
                         winSoundPlayed = false;
                     }
                 }
