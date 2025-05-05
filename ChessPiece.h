@@ -4,12 +4,25 @@
 #include <sstream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
+
+#include "Constants.h"
 using namespace std;
 
 const int MAX_RANGE = 8;
 
+enum PieceType {
+	EMPTY = 0,
+	PAWN = 1,
+	KNIGHT = 2,
+	BISHOP = 3,
+	ROOK = 4,
+	QUEEN = 5,
+	KING = 6
+};
+
 class ChessPiece {
-protected:
+private:
+	PieceType pieceType;
 	vector<bool> validDirections; // format: {canMoveHorizontal, canMoveVertical, canMoveDiagonal}
 	vector<int> takeMoves; 
 	int range, side, value; // 0: white 1: black
@@ -20,29 +33,101 @@ protected:
 	sf::SoundBuffer buffer;
 	sf::Sound moveSound;
 
-public:
-	ChessPiece() {
-		side = 0;
-		range = 0;
-		value = 0;
-		activePiece = false;
-		strictMotion = false;
-		strictCapture = false;
-		specialTakeMoves = false;
+	// Pawn specific attributes
+	int moves, lastMoveDiff, doubleMoveTurn;
+
+	// King specific attributes
+	bool kingCanCastle;
+
+	void initializePiece() {
+		switch (pieceType) {
+			case PAWN:
+				range = 1;
+				value = 1;
+				validDirections = { false, false, false };
+				name = "pawn";
+				strictMotion = true;
+				specialTakeMoves = true;
+				lastMoveDiff = 0;
+				moves = 0;
+				doubleMoveTurn = -1;
+				takeMoves = { BOARD_WIDTH - 1, BOARD_WIDTH + 1 };
+				strictMoves = { BOARD_WIDTH, 2 * BOARD_WIDTH };
+				break;
+
+			case KNIGHT:
+				range = MAX_RANGE;
+				value = 3;
+				validDirections = { false, false, false };
+				name = "knight";
+				strictMotion = true;
+				strictCapture = true;
+				strictMoves = { -2 * BOARD_WIDTH - 1, -2 * BOARD_WIDTH + 1, -BOARD_WIDTH - 2,
+					-BOARD_WIDTH + 2, BOARD_WIDTH - 2, BOARD_WIDTH + 2, 2 * BOARD_WIDTH - 1, 2 * BOARD_WIDTH + 1 };
+				break;
+
+			case BISHOP:
+				range = MAX_RANGE;
+				value = 3;
+				validDirections = { false, false, true };
+				name = "bishop";
+				break;
+
+			case ROOK:
+				range = MAX_RANGE;
+				value = 5;
+				validDirections = { true, true, false };
+				name = "rook";
+				break;
+
+			case QUEEN:
+				range = MAX_RANGE;
+				value = 9;
+				validDirections = { true, true, true };
+				name = "queen";
+				break;
+
+			case KING:
+				range = 1;
+				value = 0;
+				validDirections = { true, true, true };
+				name = "king";
+				kingCanCastle = true;
+				break;
+
+			case EMPTY:
+			default:
+				value = 0;
+				activePiece = false;
+				name = "empty";
+				break;
+		}
 	}
 
-	ChessPiece(int rng, int val, vector<bool> perms, string n) {
-		range = rng;
-		value = val;
-		validDirections = perms;
-		name = n;
+	void flipVector(vector<int>& v) {
+		for (int& i : v) {
+			i *= -1;
+		}
+	}
+
+public:
+	ChessPiece(PieceType type) : pieceType(type) {
+		pieceType = type;
 		side = 0;
 		activePiece = true;
 		strictMotion = false;
 		strictCapture = false;
 		specialTakeMoves = false;
+		moves = 0;
+		lastMoveDiff = 0;
+		doubleMoveTurn = -1;
+		kingCanCastle = false;
+
+		initializePiece();
 		loadTexture();
 	}
+
+	ChessPiece() : ChessPiece(EMPTY) {}
 
 
 
@@ -59,14 +144,26 @@ public:
 		moveSound.setBuffer(buffer);
 	}
 
-	virtual void onMove(int moveDiff, int moveNum) {
+	void onMove(int moveDiff, int moveNum) {
 		// called every time the piece is moved
 		moveSound.play();
+		kingCanCastle = false;
+		if (!moves++ && isOfType(PAWN)) {
+			if (moveDiff == 2 * BOARD_WIDTH) {
+				doubleMoveTurn = moveNum;
+			}
+			strictMoves.erase(strictMoves.begin() + 1);
+		}
+		lastMoveDiff = moveDiff;
 	}
 
-	virtual void switchSide() {
+	void switchSide() {
 		side ^= 1;
 		loadTexture();
+		if (isOfType(PAWN)) {
+			flipVector(takeMoves);
+			flipVector(strictMoves);
+		}
 	}
 
 	int getSide() const {
@@ -109,11 +206,7 @@ public:
 		return specialTakeMoves;
 	}
 
-	virtual bool isKing() {
-		return false;
-	}
-
-	virtual bool canCastle() {
+	bool canCastle() {
 		return false;
 	}
 
@@ -133,12 +226,17 @@ public:
 		return name;
 	}
 
-	virtual bool isPawn() const {
-		return false;
+	bool isOfType(PieceType type) const {
+		return pieceType == type;
 	}
 
-	virtual bool canBeEnPassanted(int moveNum) {
-		return false;
+	bool canBeEnPassanted(int moveNum) const {
+		// First move, moved two spaces, turn after move
+		return isOfType(PAWN) && moves == 1 && lastMoveDiff == 2 * BOARD_WIDTH && moveNum == doubleMoveTurn + 1;
+	}
+
+	bool canCastle() const {
+		return kingCanCastle;
 	}
 
 };

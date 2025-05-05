@@ -8,19 +8,13 @@
 #define NOMINMAX
 #include "windows.h"
 #include "Board.h"
+#include "Constants.h"
 #include "fcntl.h"
 #include "io.h"
 using namespace std;
 
-const int BOARD_HEIGHT = 8;
-const int BOARD_WIDTH = 8;
-const int WINDOW_WIDTH = 512;
-const int WINDOW_HEIGHT = 768;
-const float BUTTON_SIZE = 128;
-const int BUTTON_OUTLINE_WIDTH = 5;
-const int BUTTON_CHARSIZE = 32;
-const int TITLE_CHARSIZE = 48;
 enum WindowState {START, GAME, END};
+const vector<ChessPiece> standardPromotionPieces = { ChessPiece(ROOK), ChessPiece(BISHOP), ChessPiece(KNIGHT), ChessPiece(QUEEN) };
 
 bool inBoardRange(int x, int y) {
     return x >= 0 && x < BOARD_DIM_IN_WINDOW && y >= 0 && y < BOARD_DIM_IN_WINDOW;
@@ -36,11 +30,11 @@ void textSetup(sf::Text& txt, string s, sf::RenderWindow& window) {
 }
 
 void setPlaceHolderPieces(vector<Cell>& v, int promoSide = 0) {
-    vector<ChessPiece*> promotionPieces = { new Rook, new Bishop, new Knight(BOARD_WIDTH), new Queen };
+    vector<ChessPiece> promotionPieces = standardPromotionPieces;
     for (int i = 0; i < promotionPieces.size(); i++) {
         Cell& cur = v.at(i);
         if (promoSide) {
-            promotionPieces.at(i)->switchSide();
+            promotionPieces.at(i).switchSide();
         }
         cur.setChessPiece(promotionPieces.at(i));
         cur.setPos(sf::Vector2f(WINDOW_WIDTH / 2 + CELL_WIDTH * (i - 2), CELL_WIDTH + (BOARD_DIM_IN_WINDOW + CELL_WIDTH) * !promoSide));

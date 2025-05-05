@@ -3,12 +3,7 @@
 #include "windows.h"
 #include "Cell.h"
 #include "ChessPiece.h"
-#include "Pawn.h"
-#include "Queen.h"
-#include "Rook.h"
-#include "Knight.h"
-#include "King.h"
-#include "Bishop.h"
+#include "Constants.h"
 #include <set>
 #include <vector>
 #include <iostream>
@@ -17,10 +12,10 @@
 
 using namespace std;
 
-const int NONE_SELECTED = -10;
-const int Y_OFFSET = 128;
-const int BOARD_DIM_IN_WINDOW = 512;
 const enum GameState {NONE, CHECK, CHECKMATE, STALEMATE, NO_TURN};
+const vector<ChessPiece> standardBackRow = {
+	ChessPiece(ROOK), ChessPiece(KNIGHT), ChessPiece(BISHOP), ChessPiece(QUEEN),
+	ChessPiece(KING), ChessPiece(BISHOP), ChessPiece(KNIGHT), ChessPiece(ROOK) };
 
 
 class Board : public sf::Drawable {
@@ -82,15 +77,15 @@ public:
 		doPromotion = false;
 		moveSoundBuffer = sf::SoundBuffer(moveSound);
 		for (int j = 0; j < 2; j++) {
-			vector<ChessPiece*> backRow = { new Rook, new Knight(w), new Bishop, new Queen, new King, new Bishop, new Knight(w), new Rook };
+			vector<ChessPiece> backRow = standardBackRow;
 			for (int i = 0; i < w; i++) {
-				ChessPiece* backPiece = backRow.at(i);
-				Pawn* pawn = new Pawn(w);
-				backPiece->setSound(moveSoundBuffer);
-				pawn->setSound(moveSoundBuffer);
+				ChessPiece& backPiece = backRow.at(i);
+				ChessPiece pawn = ChessPiece(PAWN);
+				backPiece.setSound(moveSoundBuffer);
+				pawn.setSound(moveSoundBuffer);
 				if (j) {
-					backPiece->switchSide();
-					pawn->switchSide();
+					backPiece.switchSide();
+					pawn.switchSide();
 				}
 				brd.at(i + j * (h * w - w)).setChessPiece(backPiece);
 				brd.at(w + i + (h * (w - 3)) * j).setChessPiece(pawn);
@@ -209,7 +204,7 @@ public:
 	}
 
 	bool shouldPromote(ChessPiece& piece, int pos) {
-		return piece.isPawn() && ((!piece.getSide() && (pos / height) == height - 1) ||
+		return piece.isOfType(PAWN) && ((!piece.getSide() && (pos / height) == height - 1) ||
 			(piece.getSide() && !(pos / height)));
 	}
 
@@ -225,14 +220,14 @@ public:
 	GameState check(int sideFor, bool checkAll, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
 		set<int> allMovesFor;
 		GameState gameState = NONE;
-		int opposingKingPos = (subPiece.isKing() && subPieceAt != NONE_SELECTED) * subPieceAt;
+		int opposingKingPos = (subPiece.isOfType(KING) && subPieceAt != NONE_SELECTED) * subPieceAt;
 		for (int i = 0; i < brd.size(); i++) {
 			ChessPiece& cur = brd.at(i).getChessPiece();
 			if (cur.isOnSide(sideFor) && i != subPieceAt) {
 				set<int> curMoves = getPossibleMoves(i, cur, false, subPiece, subPieceAt, removePieceFrom);
 				allMovesFor.insert(curMoves.begin(), curMoves.end());
 			}
-			else if (!(subPiece.isKing() && subPieceAt != NONE_SELECTED) && cur.isKing()) {
+			else if (!(subPiece.isOfType(KING) && subPieceAt != NONE_SELECTED) && cur.isOfType(KING)) {
 				opposingKingPos = i;
 			}
 		}
@@ -270,7 +265,7 @@ public:
 				}
 			}
 		}
-		if (piece.isKing() && verifyLegal) {
+		if (piece.isOfType(KING) && verifyLegal) {
 			setCastleMoves(pos);
 			for (int i : castleMoves) {
 				if (i != NONE_SELECTED) {
@@ -390,7 +385,7 @@ public:
 				moves.insert(newPos);
 			}
 			else {
-				continueChecking = !piece.isPawn();
+				continueChecking = !piece.isOfType(PAWN);
 			}
 		}
 		if (piece.hasSpecialTakeMoves()) {
@@ -406,7 +401,7 @@ public:
 				}
 			}
 		}
-		if (piece.isPawn()) {
+		if (piece.isOfType(PAWN)) {
 			vector<int> neighbors = getNeighbors(pos);
 			for (int i : neighbors) {
 				ChessPiece& neighbor = brd.at(i).getChessPiece();
