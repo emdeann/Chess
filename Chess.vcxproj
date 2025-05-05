@@ -135,6 +135,7 @@
     <ClInclude Include="Board.h" />
     <ClInclude Include="Cell.h" />
     <ClInclude Include="ChessPiece.h" />
+    <ClInclude Include="ChessPieceBuilder.h" />
     <ClInclude Include="constants.h" />
   </ItemGroup>
   <ItemGroup>

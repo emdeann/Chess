@@ -39,79 +39,17 @@ private:
 	// King specific attributes
 	bool kingCanCastle;
 
-	void initializePiece() {
-		switch (pieceType) {
-			case PAWN:
-				range = 1;
-				value = 1;
-				validDirections = { false, false, false };
-				name = "pawn";
-				strictMotion = true;
-				specialTakeMoves = true;
-				lastMoveDiff = 0;
-				moves = 0;
-				doubleMoveTurn = -1;
-				takeMoves = { BOARD_WIDTH - 1, BOARD_WIDTH + 1 };
-				strictMoves = { BOARD_WIDTH, 2 * BOARD_WIDTH };
-				break;
-
-			case KNIGHT:
-				range = MAX_RANGE;
-				value = 3;
-				validDirections = { false, false, false };
-				name = "knight";
-				strictMotion = true;
-				strictCapture = true;
-				strictMoves = { -2 * BOARD_WIDTH - 1, -2 * BOARD_WIDTH + 1, -BOARD_WIDTH - 2,
-					-BOARD_WIDTH + 2, BOARD_WIDTH - 2, BOARD_WIDTH + 2, 2 * BOARD_WIDTH - 1, 2 * BOARD_WIDTH + 1 };
-				break;
-
-			case BISHOP:
-				range = MAX_RANGE;
-				value = 3;
-				validDirections = { false, false, true };
-				name = "bishop";
-				break;
-
-			case ROOK:
-				range = MAX_RANGE;
-				value = 5;
-				validDirections = { true, true, false };
-				name = "rook";
-				break;
-
-			case QUEEN:
-				range = MAX_RANGE;
-				value = 9;
-				validDirections = { true, true, true };
-				name = "queen";
-				break;
-
-			case KING:
-				range = 1;
-				value = 0;
-				validDirections = { true, true, true };
-				name = "king";
-				kingCanCastle = true;
-				break;
-
-			case EMPTY:
-			default:
-				value = 0;
-				activePiece = false;
-				name = "empty";
-				break;
-		}
-	}
-
 	void flipVector(vector<int>& v) {
 		for (int& i : v) {
 			i *= -1;
 		}
 	}
+   
+    friend class ChessPieceBuilder;
+    friend class ChessPieceRegistry;
 
 public:
-	ChessPiece(PieceType type) : pieceType(type) {
+	ChessPiece(PieceType type) {
 		pieceType = type;
 		side = 0;
 		activePiece = true;
@@ -122,14 +60,12 @@ public:
 		lastMoveDiff = 0;
 		doubleMoveTurn = -1;
 		kingCanCastle = false;
-
-		initializePiece();
-		loadTexture();
+        range = 0;
+        value = 0;
+        name = "";
 	}
 
 	ChessPiece() : ChessPiece(EMPTY) {}
-
-
 
 	void loadTexture() {
 		if (activePiece) {
@@ -206,10 +142,6 @@ public:
 		return specialTakeMoves;
 	}
 
-	bool canCastle() {
-		return false;
-	}
-
 	vector<int> getTakeMoves() const {
 		return takeMoves;
 	}
@@ -238,5 +170,4 @@ public:
 	bool canCastle() const {
 		return kingCanCastle;
 	}
-
 };

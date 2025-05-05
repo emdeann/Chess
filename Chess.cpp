@@ -14,7 +14,7 @@
 using namespace std;
 
 enum WindowState {START, GAME, END};
-const vector<ChessPiece> standardPromotionPieces = { ChessPiece(ROOK), ChessPiece(BISHOP), ChessPiece(KNIGHT), ChessPiece(QUEEN) };
+const vector<ChessPiece> standardPromotionPieces = ChessPieceFactory::createStandardPromotionPieces();
 
 bool inBoardRange(int x, int y) {
     return x >= 0 && x < BOARD_DIM_IN_WINDOW && y >= 0 && y < BOARD_DIM_IN_WINDOW;

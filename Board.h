@@ -3,6 +3,7 @@
 #include "windows.h"
 #include "Cell.h"
 #include "ChessPiece.h"
+#include "ChessPieceBuilder.h"
 #include "Constants.h"
 #include <set>
 #include <vector>
@@ -13,9 +14,7 @@
 using namespace std;
 
 const enum GameState {NONE, CHECK, CHECKMATE, STALEMATE, NO_TURN};
-const vector<ChessPiece> standardBackRow = {
-	ChessPiece(ROOK), ChessPiece(KNIGHT), ChessPiece(BISHOP), ChessPiece(QUEEN),
-	ChessPiece(KING), ChessPiece(BISHOP), ChessPiece(KNIGHT), ChessPiece(ROOK) };
+const vector<ChessPiece> standardBackRow = ChessPieceFactory::createStandardBackRow();
 
 
 class Board : public sf::Drawable {
@@ -80,7 +79,7 @@ public:
 			vector<ChessPiece> backRow = standardBackRow;
 			for (int i = 0; i < w; i++) {
 				ChessPiece& backPiece = backRow.at(i);
-				ChessPiece pawn = ChessPiece(PAWN);
+				ChessPiece pawn = ChessPieceFactory::createPiece(PAWN);
 				backPiece.setSound(moveSoundBuffer);
 				pawn.setSound(moveSoundBuffer);
 				if (j) {

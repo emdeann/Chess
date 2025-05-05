@@ -2,6 +2,7 @@
 #include <string>
 #include <SFML/Graphics.hpp>
 #include "ChessPiece.h"
+#include "ChessPieceBuilder.h"
 
 using namespace std;
 
@@ -18,7 +19,7 @@ private:
 	sf::RectangleShape cellRect;
 public:
 	Cell() {
-		piece = ChessPiece(EMPTY);
+		piece = ChessPieceFactory::createPiece(EMPTY);
 		isCursor = false;
 		isSelected = false;
 		isHighlighted = false;
@@ -42,7 +43,7 @@ public:
 
 	void movePiece(Cell& other) {
 		other.piece = piece;
-		piece = ChessPiece(EMPTY);
+		piece = ChessPieceFactory::createPiece(EMPTY);
 	}
 
 	void toggleHighlight(sf::Color color = sf::Color::Green) {
