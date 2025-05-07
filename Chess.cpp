@@ -13,7 +13,7 @@
 #include "io.h"
 using namespace std;
 
-enum WindowState {START, GAME, END};
+enum class WindowState {START, GAME, END};
 const vector<ChessPiece> standardPromotionPieces = ChessPieceFactory::createStandardPromotionPieces();
 
 bool inBoardRange(int x, int y) {
@@ -29,15 +29,15 @@ void textSetup(sf::Text& txt, string s, sf::RenderWindow& window) {
     txt.setPosition(window.getSize().x / 2.f, window.getSize().y / 4.f);
 }
 
-void setPlaceHolderPieces(vector<Cell>& v, int promoSide = 0) {
+void setPlaceHolderPieces(vector<Cell>& v, PieceSide promoSide = PieceSide::NONE) {
     vector<ChessPiece> promotionPieces = standardPromotionPieces;
     for (int i = 0; i < promotionPieces.size(); i++) {
         Cell& cur = v.at(i);
-        if (promoSide) {
+        if (promoSide == PieceSide::BLACK) {
             promotionPieces.at(i).switchSide();
         }
         cur.setChessPiece(promotionPieces.at(i));
-        cur.setPos(sf::Vector2f(WINDOW_WIDTH / 2 + CELL_WIDTH * (i - 2), CELL_WIDTH + (BOARD_DIM_IN_WINDOW + CELL_WIDTH) * !promoSide));
+        cur.setPos(sf::Vector2f(WINDOW_WIDTH / 2 + CELL_WIDTH * (i - 2), CELL_WIDTH + (BOARD_DIM_IN_WINDOW + CELL_WIDTH) * (promoSide == PieceSide::WHITE)));
     }
 }
 
@@ -66,19 +66,19 @@ void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move,
         else if (inBoardRange(event.mouseButton.x, yAdj)) {
             int boardPos = (event.mouseButton.x / CELL_WIDTH) + (yAdj / CELL_WIDTH) * BOARD_WIDTH;
             GameState curState = board.selectTile(boardPos, move);
-            if (curState != NO_TURN) {
+            if (curState != GameState::NO_TURN) {
                 move += 1;
                 gameState = curState;
-                if (gameState == CHECKMATE) {
+                if (gameState == GameState::CHECKMATE) {
                     winnerSide = (move - 1) % 2;
                 }
             }
         }
     }
     switch (gameState) {
-    case CHECK:
-    case NONE:
-        window.clear((gameState == CHECK) ? sf::Color::Red : sf::Color::Black);
+    case GameState::CHECK:
+    case GameState::NONE:
+        window.clear((gameState == GameState::CHECK) ? sf::Color::Red : sf::Color::Black);
         window.draw(board);
         if (promote) {
             for (Cell& c : promoCells) {
@@ -86,10 +86,10 @@ void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move,
             }
         }
         break;
-    case CHECKMATE:
-    case STALEMATE:
+    case GameState::CHECKMATE:
+    case GameState::STALEMATE:
         buttonText.setString("Play Again?");
-        windowState = END;
+        windowState = WindowState::END;
         break;
     }
 }
@@ -99,16 +99,16 @@ void displayTitleText(sf::RenderWindow& window, GameState& gameState, sf::Text& 
     string text;
     window.clear(sf::Color::Black);
     switch (gameState) {
-    case NONE:
-    case NO_TURN:
-    case CHECK:
+    case GameState::NONE:
+    case GameState::NO_TURN:
+    case GameState::CHECK:
         text = "2-P Chess!";
         break;
-    case CHECKMATE:
+    case GameState::CHECKMATE:
         titleStr << "Checkmate" << endl << ((winnerSide) ? "Black" : "White") << " Wins!";
         text = titleStr.str();
         break;
-    case STALEMATE:
+    case GameState::STALEMATE:
         text = "Stalemate :(";
         break;
     }
@@ -120,8 +120,8 @@ void resetGame(Board& board, int& move, int& winnerSide, GameState& gameState, W
     board = Board(BOARD_WIDTH, BOARD_HEIGHT, sound, font);
     move = 0;
     winnerSide = -1;
-    gameState = NONE;
-    windowState = GAME;
+    gameState = GameState::NONE;
+    windowState = WindowState::GAME;
 }
 
 void setupButton(sf::RectangleShape& rect, sf::Vector2f size, sf::Vector2f pos, sf::Color fillColor, int outline, sf::Text& buttonText) {
@@ -137,11 +137,11 @@ int main() {
     int move = 0, winnerSide = -1;
     vector<Cell> promotionCells(4);
     bool holderPiecesSet = false, winSoundPlayed = false;
-    WindowState windowState = START;
+    WindowState windowState = WindowState::START;
     sf::SoundBuffer moveSoundBuffer, winSoundBuffer, selectSoundBuffer;
     sf::Sound winSound;
     sf::Sound selectSound;
-    GameState gameState = NONE;
+    GameState gameState = GameState::NONE;
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Chess", sf::Style::Titlebar | sf::Style::Close);
     sf::Font font;
     sf::Text titleText;
@@ -182,23 +182,23 @@ int main() {
             if (event.type == sf::Event::Closed)
                 window.close();
             switch (windowState) {
-            case START:
+            case WindowState::START:
                 displayTitleText(window, gameState, titleText, winnerSide);
                 window.draw(replayButton);
                 window.draw(buttonText);
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     if (replayButton.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
-                        windowState = GAME;
+                        windowState = WindowState::GAME;
                         selectSound.play();
                         music.play();
                     }
                 }
                 break;
-            case GAME:
+            case WindowState::GAME:
                 runGame(event, gameState, winnerSide, move, window, board, titleStr, titleText, 
                     windowState, buttonText, promotionCells, holderPiecesSet);
                 break;
-            case END:
+            case WindowState::END:
                 displayTitleText(window, gameState, titleText, winnerSide);
                 if (!winSoundPlayed) {
                     winSound.play();

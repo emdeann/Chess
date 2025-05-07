@@ -12,3 +12,9 @@ const int TITLE_CHARSIZE = 48;
 const int NONE_SELECTED = -10;
 const int Y_OFFSET = 128;
 const int BOARD_DIM_IN_WINDOW = 512;
+
+enum class PieceSide {
+    NONE,
+    WHITE,
+    BLACK
+};

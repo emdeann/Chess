@@ -10,7 +10,7 @@ using namespace std;
 
 const int MAX_RANGE = 8;
 
-enum PieceType {
+enum class PieceType {
 	EMPTY = 0,
 	PAWN = 1,
 	KNIGHT = 2,
@@ -24,8 +24,9 @@ class ChessPiece {
 private:
 	PieceType pieceType;
 	vector<bool> validDirections; // format: {canMoveHorizontal, canMoveVertical, canMoveDiagonal}
-	vector<int> takeMoves; 
-	int range, side, value; // 0: white 1: black
+	vector<int> takeMoves;
+	int range, value;
+	PieceSide side;
 	bool activePiece, strictMotion, strictCapture, specialTakeMoves;
 	vector<int> strictMoves; // int offsets from position instead of directions where needed (ie knight)
 	string name;
@@ -44,14 +45,14 @@ private:
 			i *= -1;
 		}
 	}
-   
-    friend class ChessPieceBuilder;
-    friend class ChessPieceRegistry;
+
+	friend class ChessPieceBuilder;
+	friend class ChessPieceRegistry;
 
 public:
 	ChessPiece(PieceType type) {
 		pieceType = type;
-		side = 0;
+		side = PieceSide::WHITE;
 		activePiece = true;
 		strictMotion = false;
 		strictCapture = false;
@@ -60,17 +61,17 @@ public:
 		lastMoveDiff = 0;
 		doubleMoveTurn = -1;
 		kingCanCastle = false;
-        range = 0;
-        value = 0;
-        name = "";
+		range = 0;
+		value = 0;
+		name = "";
 	}
 
-	ChessPiece() : ChessPiece(EMPTY) {}
+	ChessPiece() : ChessPiece(PieceType::EMPTY) {}
 
 	void loadTexture() {
 		if (activePiece) {
 			ostringstream fileName;
-			fileName << "Textures/" << ((side) ? "b" : "w") << "_" << name << ".png";
+			fileName << "Textures/" << ((side == PieceSide::BLACK) ? "b" : "w") << "_" << name << ".png";
 			texture.loadFromFile(fileName.str());
 		}
 	}
@@ -84,7 +85,7 @@ public:
 		// called every time the piece is moved
 		moveSound.play();
 		kingCanCastle = false;
-		if (!moves++ && isOfType(PAWN)) {
+		if (!moves++ && isOfType(PieceType::PAWN)) {
 			if (moveDiff == 2 * BOARD_WIDTH) {
 				doubleMoveTurn = moveNum;
 			}
@@ -94,15 +95,15 @@ public:
 	}
 
 	void switchSide() {
-		side ^= 1;
+		side = (side == PieceSide::WHITE) ? PieceSide::BLACK : PieceSide::WHITE;
 		loadTexture();
-		if (isOfType(PAWN)) {
+		if (isOfType(PieceType::PAWN)) {
 			flipVector(takeMoves);
 			flipVector(strictMoves);
 		}
 	}
 
-	int getSide() const {
+	PieceSide getSide() const {
 		return side;
 	}
 
@@ -122,7 +123,7 @@ public:
 		return activePiece;
 	}
 
-	bool isOnSide(int s) const {
+	bool isOnSide(PieceSide s) const {
 		return activePiece && side == s;
 	}
 
@@ -164,7 +165,7 @@ public:
 
 	bool canBeEnPassanted(int moveNum) const {
 		// First move, moved two spaces, turn after move
-		return isOfType(PAWN) && moves == 1 && lastMoveDiff == 2 * BOARD_WIDTH && moveNum == doubleMoveTurn + 1;
+		return isOfType(PieceType::PAWN) && moves == 1 && lastMoveDiff == 2 * BOARD_WIDTH && moveNum == doubleMoveTurn + 1;
 	}
 
 	bool canCastle() const {

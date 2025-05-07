@@ -19,7 +19,7 @@ private:
 	sf::RectangleShape cellRect;
 public:
 	Cell() {
-		piece = ChessPieceFactory::createPiece(EMPTY);
+		piece = ChessPieceFactory::createPiece(PieceType::EMPTY);
 		isCursor = false;
 		isSelected = false;
 		isHighlighted = false;
@@ -43,7 +43,7 @@ public:
 
 	void movePiece(Cell& other) {
 		other.piece = piece;
-		piece = ChessPieceFactory::createPiece(EMPTY);
+		piece = ChessPieceFactory::createPiece(PieceType::EMPTY);
 	}
 
 	void toggleHighlight(sf::Color color = sf::Color::Green) {

@@ -11,7 +11,7 @@ private:
     ChessPiece piece;
 
 public:
-    ChessPieceBuilder() : piece(EMPTY) {}
+    ChessPieceBuilder() : piece(PieceType::EMPTY) {}
     explicit ChessPieceBuilder(PieceType type) : piece(type) {}
 
     ChessPieceBuilder& type(PieceType type) {
@@ -34,9 +34,9 @@ public:
         return *this;
     }
 
-    ChessPieceBuilder& side(int side) {
+    ChessPieceBuilder& side(PieceSide side) {
         piece.side = side;
-        if (side == 1) {
+        if (side == PieceSide::BLACK) {
             piece.switchSide();
         }
         return *this;
@@ -97,8 +97,8 @@ public:
     static void initialize() {
         if (!pieceTemplates.empty()) return;
 
-        pieceTemplates[PAWN] = ChessPieceBuilder()
-            .type(PAWN)
+        pieceTemplates[PieceType::PAWN] = ChessPieceBuilder()
+            .type(PieceType::PAWN)
             .range(1)
             .value(1)
             .name("pawn")
@@ -109,8 +109,8 @@ public:
             .strictMoves({ BOARD_WIDTH, 2 * BOARD_WIDTH })
             .build();
 
-        pieceTemplates[KNIGHT] = ChessPieceBuilder()
-            .type(KNIGHT)
+        pieceTemplates[PieceType::KNIGHT] = ChessPieceBuilder()
+            .type(PieceType::KNIGHT)
             .range(MAX_RANGE)
             .value(3)
             .name("knight")
@@ -122,32 +122,32 @@ public:
                          2 * BOARD_WIDTH - 1, 2 * BOARD_WIDTH + 1 })
             .build();
 
-        pieceTemplates[BISHOP] = ChessPieceBuilder()
-            .type(BISHOP)
+        pieceTemplates[PieceType::BISHOP] = ChessPieceBuilder()
+            .type(PieceType::BISHOP)
             .range(MAX_RANGE)
             .value(3)
             .name("bishop")
             .directions(false, false, true)
             .build();
 
-        pieceTemplates[ROOK] = ChessPieceBuilder()
-            .type(ROOK)
+        pieceTemplates[PieceType::ROOK] = ChessPieceBuilder()
+            .type(PieceType::ROOK)
             .range(MAX_RANGE)
             .value(5)
             .name("rook")
             .directions(true, true, false)
             .build();
 
-        pieceTemplates[QUEEN] = ChessPieceBuilder()
-            .type(QUEEN)
+        pieceTemplates[PieceType::QUEEN] = ChessPieceBuilder()
+            .type(PieceType::QUEEN)
             .range(MAX_RANGE)
             .value(9)
             .name("queen")
             .directions(true, true, true)
             .build();
 
-        pieceTemplates[KING] = ChessPieceBuilder()
-            .type(KING)
+        pieceTemplates[PieceType::KING] = ChessPieceBuilder()
+            .type(PieceType::KING)
             .range(1)
             .value(0)
             .name("king")
@@ -155,8 +155,8 @@ public:
             .canCastle(true)
             .build();
 
-        pieceTemplates[EMPTY] = ChessPieceBuilder()
-            .type(EMPTY)
+        pieceTemplates[PieceType::EMPTY] = ChessPieceBuilder()
+            .type(PieceType::EMPTY)
             .value(0)
             .name("empty")
             .active(false)
@@ -187,23 +187,23 @@ public:
 
     static std::vector<ChessPiece> createStandardBackRow() {
         return {
-            createPiece(ROOK),
-            createPiece(KNIGHT),
-            createPiece(BISHOP),
-            createPiece(QUEEN),
-            createPiece(KING),
-            createPiece(BISHOP),
-            createPiece(KNIGHT),
-            createPiece(ROOK)
+            createPiece(PieceType::ROOK),
+            createPiece(PieceType::KNIGHT),
+            createPiece(PieceType::BISHOP),
+            createPiece(PieceType::QUEEN),
+            createPiece(PieceType::KING),
+            createPiece(PieceType::BISHOP),
+            createPiece(PieceType::KNIGHT),
+            createPiece(PieceType::ROOK)
         };
     }
 
     static std::vector<ChessPiece> createStandardPromotionPieces() {
         return {
-            createPiece(ROOK),
-            createPiece(BISHOP),
-            createPiece(KNIGHT),
-            createPiece(QUEEN)
+            createPiece(PieceType::ROOK),
+            createPiece(PieceType::BISHOP),
+            createPiece(PieceType::KNIGHT),
+            createPiece(PieceType::QUEEN)
         };
     }
 };
