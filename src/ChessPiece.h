@@ -8,18 +8,6 @@
 #include "Constants.h"
 using namespace std;
 
-const int MAX_RANGE = 8;
-
-enum class PieceType {
-	EMPTY = 0,
-	PAWN = 1,
-	KNIGHT = 2,
-	BISHOP = 3,
-	ROOK = 4,
-	QUEEN = 5,
-	KING = 6
-};
-
 class ChessPiece {
 private:
 	PieceType pieceType;
@@ -71,7 +59,7 @@ public:
 	void loadTexture() {
 		if (activePiece) {
 			ostringstream fileName;
-			fileName << "Textures/" << ((side == PieceSide::BLACK) ? "b" : "w") << "_" << name << ".png";
+			fileName << TEXTURE_PATH << ((side == PieceSide::BLACK) ? "b" : "w") << "_" << name << ".png";
 			texture.loadFromFile(fileName.str());
 		}
 	}

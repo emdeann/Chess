@@ -13,8 +13,11 @@
 #include "io.h"
 using namespace std;
 
-enum class WindowState {START, GAME, END};
 const vector<ChessPiece> standardPromotionPieces = ChessPieceFactory::createStandardPromotionPieces();
+
+void loadSound(sf::SoundBuffer buffer, string fileName) {
+    buffer.loadFromFile(AUDIO_PATH + fileName);
+}
 
 bool inBoardRange(int x, int y) {
     return x >= 0 && x < BOARD_DIM_IN_WINDOW && y >= 0 && y < BOARD_DIM_IN_WINDOW;
@@ -149,15 +152,15 @@ int main() {
     sf::RectangleShape replayButton;
     ostringstream titleStr;
     sf::Music music;
-    music.openFromFile("music.mp3");
+    music.openFromFile(AUDIO_PATH + "music.mp3");
     music.setLoop(true);
     music.setVolume(5);
-    moveSoundBuffer.loadFromFile("move.mp3");
-    selectSoundBuffer.loadFromFile("select.wav");
-    winSoundBuffer.loadFromFile("win.wav");
+    loadSound(moveSoundBuffer, "move.mp3");
+    loadSound(selectSoundBuffer, "select.wav");
+    loadSound(winSoundBuffer, "win.wav");
     winSound.setBuffer(winSoundBuffer);
     selectSound.setBuffer(selectSoundBuffer);
-    font.loadFromFile("zig.ttf");
+    font.loadFromFile(FONT_PATH + "zig.ttf");
     titleText.setFont(font);
     buttonText.setFont(font);
     window.setVerticalSyncEnabled(true);

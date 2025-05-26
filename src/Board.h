@@ -13,7 +13,6 @@
 
 using namespace std;
 
-enum class GameState {NONE, CHECK, CHECKMATE, STALEMATE, NO_TURN};
 const vector<ChessPiece> standardBackRow = ChessPieceFactory::createStandardBackRow();
 
 

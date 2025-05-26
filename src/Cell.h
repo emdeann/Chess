@@ -6,9 +6,6 @@
 
 using namespace std;
 
-const int CELL_WIDTH = 64;
-const float DEFAULT_ITEM_SIZE = 0.375;
-
 class Cell : public sf::Drawable {
 private:
 	bool isCursor, isSelected, isHighlighted;
