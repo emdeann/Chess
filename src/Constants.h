@@ -22,34 +22,3 @@ const std::string ASSET_PATH = "assets/";
 const std::string TEXTURE_PATH = ASSET_PATH + "/textures/";
 const std::string AUDIO_PATH = ASSET_PATH + "/sounds/";
 const std::string FONT_PATH = ASSET_PATH + "/fonts/";
-
-enum class PieceType {
-	EMPTY = 0,
-	PAWN = 1,
-	KNIGHT = 2,
-	BISHOP = 3,
-	ROOK = 4,
-	QUEEN = 5,
-	KING = 6
-};
-
-enum class PieceSide {
-    NONE,
-    WHITE,
-    BLACK
-};
-
-enum class GameState { 
-	NONE, 
-	CHECK,
-	CHECKMATE, 
-	STALEMATE, 
-	NO_TURN 
-};
-
-
-enum class WindowState { 
-	START, 
-	GAME, 
-	END 
-};

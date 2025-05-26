@@ -6,6 +6,7 @@
 #include <SFML/Audio.hpp>
 
 #include "Constants.h"
+#include "Enums.h"
 using namespace std;
 
 class ChessPiece {
