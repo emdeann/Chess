@@ -19,8 +19,7 @@ private:
 	vector<int> strictMoves; // int offsets from position instead of directions where needed (ie knight)
 	string name;
 	sf::Texture texture;
-	sf::SoundBuffer buffer;
-	sf::Sound moveSound;
+	sf::Sound* moveSound;
 
 	// Pawn specific attributes
 	int moves, lastMoveDiff, doubleMoveTurn;
@@ -64,14 +63,12 @@ public:
 		}
 	}
 
-	void setSound(sf::SoundBuffer& buff) {
-		buffer = sf::SoundBuffer(buff);
-		moveSound.setBuffer(buffer);
+	void setSound(sf::Sound* sound) {
+		moveSound = sound;
 	}
 
 	void onMove(int moveDiff, int moveNum) {
-		// called every time the piece is moved
-		moveSound.play();
+		moveSound->play();
 		kingCanCastle = false;
 		if (!moves++ && isOfType(PieceType::PAWN)) {
 			if (moveDiff == 2 * BOARD_WIDTH) {

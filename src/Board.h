@@ -25,7 +25,7 @@ private:
 	vector<vector<ChessPiece>> captures;
 	int selected;
 	set<int> currentValidMoves, castleMoves;
-	sf::SoundBuffer moveSoundBuffer;
+	sf::Sound* moveSound;
 	bool doPromotion;
 	int promotionPos, promotionSide;
 
@@ -64,7 +64,7 @@ private:
 
 
 public:
-	Board(int h, int w, sf::SoundBuffer& moveSound, sf::Font& textFont) {
+	Board(int h, int w, sf::Sound& sound, sf::Font& textFont) {
 		height = h;
 		width = w;
 		curMoveNum = 0;
@@ -77,14 +77,14 @@ public:
 		promotionPos = NONE_SELECTED, promotionSide = -1;
 		enPassantMove = NONE_SELECTED;
 		doPromotion = false;
-		moveSoundBuffer = sf::SoundBuffer(moveSound);
+		moveSound = &sound;
 		for (int j = 0; j < 2; j++) {
 			vector<ChessPiece> backRow = standardBackRow;
 			for (int i = 0; i < w; i++) {
 				ChessPiece& backPiece = backRow.at(i);
 				ChessPiece pawn = ChessPieceFactory::createPiece(PieceType::PAWN);
-				backPiece.setSound(moveSoundBuffer);
-				pawn.setSound(moveSoundBuffer);
+				backPiece.setSound(moveSound);
+				pawn.setSound(moveSound);
 				if (j) {
 					backPiece.switchSide();
 					pawn.switchSide();
@@ -428,7 +428,7 @@ public:
 	}
 
 	void setPromotedPiece(Cell& cell) {
-		cell.getChessPiece().setSound(moveSoundBuffer);
+		cell.getChessPiece().setSound(moveSound);
 		cell.movePiece(brd.at(promotionPos));
 		doPromotion = false;
 		promotionPos = NONE_SELECTED;

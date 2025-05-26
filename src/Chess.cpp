@@ -15,7 +15,7 @@ using namespace std;
 
 const vector<ChessPiece> standardPromotionPieces = ChessPieceFactory::createStandardPromotionPieces();
 
-void loadSound(sf::SoundBuffer buffer, string fileName) {
+void loadSound(sf::SoundBuffer& buffer, string fileName) {
     buffer.loadFromFile(AUDIO_PATH + fileName);
 }
 
@@ -119,7 +119,7 @@ void displayTitleText(sf::RenderWindow& window, GameState& gameState, sf::Text& 
     window.draw(titleText);
 }
 
-void resetGame(Board& board, int& move, int& winnerSide, GameState& gameState, WindowState& windowState, sf::SoundBuffer& sound, sf::Font& font) {
+void resetGame(Board& board, int& move, int& winnerSide, GameState& gameState, WindowState& windowState, sf::Sound& sound, sf::Font& font) {
     board = Board(BOARD_WIDTH, BOARD_HEIGHT, sound, font);
     move = 0;
     winnerSide = -1;
@@ -142,8 +142,6 @@ int main() {
     bool holderPiecesSet = false, winSoundPlayed = false;
     WindowState windowState = WindowState::START;
     sf::SoundBuffer moveSoundBuffer, winSoundBuffer, selectSoundBuffer;
-    sf::Sound winSound;
-    sf::Sound selectSound;
     GameState gameState = GameState::NONE;
     sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Chess", sf::Style::Titlebar | sf::Style::Close);
     sf::Font font;
@@ -158,13 +156,14 @@ int main() {
     loadSound(moveSoundBuffer, "move.mp3");
     loadSound(selectSoundBuffer, "select.wav");
     loadSound(winSoundBuffer, "win.wav");
-    winSound.setBuffer(winSoundBuffer);
-    selectSound.setBuffer(selectSoundBuffer);
+    sf::Sound moveSound(moveSoundBuffer);
+    sf::Sound winSound(winSoundBuffer);
+    sf::Sound selectSound(selectSoundBuffer);
     font.loadFromFile(FONT_PATH + "zig.ttf");
     titleText.setFont(font);
     buttonText.setFont(font);
     window.setVerticalSyncEnabled(true);
-    Board board(BOARD_HEIGHT, BOARD_WIDTH, moveSoundBuffer, font);
+    Board board(BOARD_HEIGHT, BOARD_WIDTH, moveSound, font);
     buttonText.setCharacterSize(BUTTON_CHARSIZE);
     buttonText.setString("Start Game");
     setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, BUTTON_SIZE),
@@ -212,7 +211,7 @@ int main() {
                 window.draw(buttonText);
                 if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
                     if (replayButton.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
-                        resetGame(board, move, winnerSide, gameState, windowState, moveSoundBuffer, font);
+                        resetGame(board, move, winnerSide, gameState, windowState, moveSound, font);
                         selectSound.play();
                         music.play();
                         winSoundPlayed = false;
