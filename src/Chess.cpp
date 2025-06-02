@@ -7,7 +7,7 @@
 #include <chrono>
 #define NOMINMAX
 #include "windows.h"
-#include "Board.h"
+#include "GameManager.h"
 #include "Constants.h"
 #include "fcntl.h"
 #include "io.h"
@@ -45,7 +45,7 @@ void setPlaceHolderPieces(vector<Cell>& v, PieceSide promoSide = PieceSide::NONE
 }
 
 void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move, sf::RenderWindow& window, 
-    Board& board, ostringstream& titleStr, sf::Text& titleText, WindowState& windowState, sf::Text& buttonText, 
+    GameManager& board, ostringstream& titleStr, sf::Text& titleText, WindowState& windowState, sf::Text& buttonText, 
     vector<Cell>& promoCells, bool& holderPiecesSet) {
     bool promote = board.isDoPromotion();
     if (promote && !holderPiecesSet) {
@@ -119,8 +119,8 @@ void displayTitleText(sf::RenderWindow& window, GameState& gameState, sf::Text& 
     window.draw(titleText);
 }
 
-void resetGame(Board& board, int& move, int& winnerSide, GameState& gameState, WindowState& windowState, sf::Sound& sound, sf::Font& font) {
-    board = Board(BOARD_WIDTH, BOARD_HEIGHT, sound, font);
+void resetGame(GameManager& board, int& move, int& winnerSide, GameState& gameState, WindowState& windowState, sf::Sound& sound, sf::Font& font) {
+    board = GameManager(BOARD_WIDTH, BOARD_HEIGHT, sound, font);
     move = 0;
     winnerSide = -1;
     gameState = GameState::NONE;
@@ -163,7 +163,7 @@ int main() {
     titleText.setFont(font);
     buttonText.setFont(font);
     window.setVerticalSyncEnabled(true);
-    Board board(BOARD_HEIGHT, BOARD_WIDTH, moveSound, font);
+    GameManager board(BOARD_HEIGHT, BOARD_WIDTH, moveSound, font);
     buttonText.setCharacterSize(BUTTON_CHARSIZE);
     buttonText.setString("Start Game");
     setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, BUTTON_SIZE),
