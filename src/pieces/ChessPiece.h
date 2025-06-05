@@ -5,8 +5,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
-#include "Constants.h"
-#include "Enums.h"
+#include "../constants/Constants.h"
+#include "../constants/Enums.h"
 using namespace std;
 
 class ChessPiece {

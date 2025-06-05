@@ -8,7 +8,9 @@
 #define NOMINMAX
 #include "windows.h"
 #include "GameManager.h"
-#include "Constants.h"
+#include "pieces/ChessPieceBuilder.h"
+#include "constants/Constants.h"
+#include "constants/Enums.h"
 #include "fcntl.h"
 #include "io.h"
 using namespace std;

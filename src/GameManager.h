@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Constants.h"
-#include "Board.h"
-#include "MoveValidator.h"
-#include "BoardRenderer.h"
-#include "MoveExecutor.h"
+#include "constants/Constants.h"
+#include "board/Board.h"
+#include "moves/MoveExecutor.h"
+#include "moves/MoveValidator.h"
+#include "board/BoardRenderer.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <set>

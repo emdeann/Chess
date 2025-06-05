@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Cell.h"
-#include "Constants.h"
-#include "Enums.h"
+#include "../constants/Constants.h"
+#include "../constants/Enums.h"
 #include <vector>
 
 using namespace std;

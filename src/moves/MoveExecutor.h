@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Board.h"
+#include "../board/Board.h"
 #include "MoveValidator.h"
 #include <set>
 

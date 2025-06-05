@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Board.h"
-#include "Enums.h"
+#include "../board/Board.h"
+#include "../constants/Enums.h"
 #include <set>
 
 class MoveValidator {

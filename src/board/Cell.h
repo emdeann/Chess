@@ -1,8 +1,8 @@
 #pragma once
 #include <string>
 #include <SFML/Graphics.hpp>
-#include "ChessPiece.h"
-#include "ChessPieceBuilder.h"
+#include "../pieces/ChessPiece.h"
+#include "../pieces/ChessPieceBuilder.h"
 
 using namespace std;
 
