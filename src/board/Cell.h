@@ -69,13 +69,11 @@ public:
 	void draw(sf::RenderTarget& target, sf::RenderStates states) const {
 		target.draw(cellRect);
 		if (piece.isActive()) {
-			sf::Sprite pieceSprite;
-			sf::Texture texture = piece.getTexture();
-			pieceSprite.setTexture(texture);
-			pieceSprite.setOrigin(sf::Vector2f(texture.getSize().x / 2, texture.getSize().y / 2));
-			pieceSprite.setScale(sf::Vector2f(DEFAULT_ITEM_SIZE, DEFAULT_ITEM_SIZE));
+			sf::Sprite pieceSprite(piece.getTexture());
+			pieceSprite.setOrigin({ static_cast<float>(pieceSprite.getTexture().getSize().x) / 2, static_cast<float>(pieceSprite.getTexture().getSize().y) / 2});
+			pieceSprite.setScale({ DEFAULT_ITEM_SIZE, DEFAULT_ITEM_SIZE });
 			sf::Vector2f rectPos = cellRect.getPosition();
-			pieceSprite.setPosition(rectPos.x + CELL_WIDTH/2, rectPos.y + CELL_WIDTH/2);
+			pieceSprite.setPosition({ rectPos.x + CELL_WIDTH / 2, rectPos.y + CELL_WIDTH / 2 });
 			target.draw(pieceSprite);
 		}
 	}

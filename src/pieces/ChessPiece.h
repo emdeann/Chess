@@ -133,7 +133,7 @@ public:
 		return takeMoves;
 	}
 
-	sf::Texture getTexture() const {
+	const sf::Texture& getTexture() const {
 		return texture;
 	}
 

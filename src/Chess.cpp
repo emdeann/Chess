@@ -21,6 +21,14 @@ void loadSound(sf::SoundBuffer& buffer, string fileName) {
     buffer.loadFromFile(AUDIO_PATH + fileName);
 }
 
+bool leftMousePressed(std::optional<sf::Event>& event) {
+    return event->is<sf::Event::MouseButtonPressed>() && event->getIf<sf::Event::MouseButtonPressed>()->button == sf::Mouse::Button::Left;
+}
+
+bool rectContainsMouse(sf::FloatRect& rect, std::optional<sf::Event>& event) {
+    return rect.contains(static_cast<sf::Vector2f>(event->getIf<sf::Event::MouseButtonPressed>()->position));
+}
+
 bool inBoardRange(int x, int y) {
     return x >= 0 && x < BOARD_DIM_IN_WINDOW && y >= 0 && y < BOARD_DIM_IN_WINDOW;
 }
@@ -29,9 +37,9 @@ void textSetup(sf::Text& txt, string s, sf::RenderWindow& window) {
     txt.setCharacterSize(TITLE_CHARSIZE);
     txt.setString(s);
     sf::FloatRect textRect = txt.getLocalBounds();
-    txt.setOrigin(textRect.left + textRect.width / 2.0f,
-        textRect.top + textRect.height / 2.0f);
-    txt.setPosition(window.getSize().x / 2.f, window.getSize().y / 4.f);
+    txt.setOrigin({ textRect.position.x + textRect.size.x / 2.0f,
+                textRect.position.y + textRect.size.y / 2.0f });
+    txt.setPosition({ window.getSize().x / 2.f, window.getSize().y / 4.f });
 }
 
 void setPlaceHolderPieces(vector<Cell>& v, PieceSide promoSide = PieceSide::NONE) {
@@ -46,7 +54,7 @@ void setPlaceHolderPieces(vector<Cell>& v, PieceSide promoSide = PieceSide::NONE
     }
 }
 
-void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move, sf::RenderWindow& window, 
+void runGame(std::optional<sf::Event>& event, GameState& gameState, int& winnerSide, int& move, sf::RenderWindow& window, 
     GameManager& board, ostringstream& titleStr, sf::Text& titleText, WindowState& windowState, sf::Text& buttonText, 
     vector<Cell>& promoCells, bool& holderPiecesSet) {
     bool promote = board.isDoPromotion();
@@ -54,12 +62,13 @@ void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move,
         setPlaceHolderPieces(promoCells, board.getPromotionSide());
         holderPiecesSet = true;
     }
-    if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-        int yAdj = event.mouseButton.y - Y_OFFSET;
+    if (leftMousePressed(event)) {
+        sf::Vector2i mousePos = event->getIf <sf::Event::MouseButtonPressed>()->position;
+        int yAdj = mousePos.y - Y_OFFSET;
         int selectedPos = NONE_SELECTED;
         if (promote) {
             for (int i = 0; i < promoCells.size() && selectedPos == NONE_SELECTED; i++) {
-                if (promoCells.at(i).getRect().getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                if (rectContainsMouse(promoCells.at(i).getRect().getGlobalBounds(), event)) {
                     selectedPos = i;
                 }
             }
@@ -68,8 +77,8 @@ void runGame(sf::Event& event, GameState& gameState, int& winnerSide, int& move,
                 holderPiecesSet = false;
             }
         }
-        else if (inBoardRange(event.mouseButton.x, yAdj)) {
-            int boardPos = (event.mouseButton.x / CELL_WIDTH) + (yAdj / CELL_WIDTH) * BOARD_WIDTH;
+        else if (inBoardRange(mousePos.x, yAdj)) {
+            int boardPos = (mousePos.x / CELL_WIDTH) + (yAdj / CELL_WIDTH) * BOARD_WIDTH;
             GameState curState = board.selectTile(boardPos, move);
             if (curState != GameState::NO_TURN) {
                 move += 1;
@@ -134,7 +143,7 @@ void setupButton(sf::RectangleShape& rect, sf::Vector2f size, sf::Vector2f pos, 
     rect.setPosition(pos);
     rect.setFillColor(fillColor);
     rect.setOutlineThickness(outline);
-    buttonText.setOrigin(buttonText.getGlobalBounds().getSize() / 2.f + buttonText.getLocalBounds().getPosition());
+    buttonText.setOrigin(buttonText.getGlobalBounds().size / 2.f + buttonText.getLocalBounds().position);
     buttonText.setPosition(rect.getPosition() + (rect.getSize() / 2.f));
 }
 
@@ -145,15 +154,15 @@ int main() {
     WindowState windowState = WindowState::START;
     sf::SoundBuffer moveSoundBuffer, winSoundBuffer, selectSoundBuffer;
     GameState gameState = GameState::NONE;
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "Chess", sf::Style::Titlebar | sf::Style::Close);
+    sf::RenderWindow window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), "Chess", sf::Style::Titlebar | sf::Style::Close);
     sf::Font font;
-    sf::Text titleText;
-    sf::Text buttonText;
+    sf::Text titleText(font);
+    sf::Text buttonText(font);
     sf::RectangleShape replayButton;
     ostringstream titleStr;
     sf::Music music;
     music.openFromFile(AUDIO_PATH + "music.mp3");
-    music.setLoop(true);
+    music.setLooping(true);
     music.setVolume(5);
     loadSound(moveSoundBuffer, "move.mp3");
     loadSound(selectSoundBuffer, "select.wav");
@@ -161,9 +170,7 @@ int main() {
     sf::Sound moveSound(moveSoundBuffer);
     sf::Sound winSound(winSoundBuffer);
     sf::Sound selectSound(selectSoundBuffer);
-    font.loadFromFile(FONT_PATH + "zig.ttf");
-    titleText.setFont(font);
-    buttonText.setFont(font);
+    font.openFromFile(FONT_PATH + "zig.ttf");
     window.setVerticalSyncEnabled(true);
     GameManager board(BOARD_HEIGHT, BOARD_WIDTH, moveSound, font);
     buttonText.setCharacterSize(BUTTON_CHARSIZE);
@@ -176,22 +183,18 @@ int main() {
         cur.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
         cur.setDefaultColor(sf::Color::Cyan);
     }
+    while (std::optional event = window.pollEvent()) {
 
-    while (window.isOpen()) {
-
-        sf::Event event;
-
-        while (window.pollEvent(event)) {
-
-            if (event.type == sf::Event::Closed)
-                window.close();
-            switch (windowState) {
+        if (event->is<sf::Event::Closed>()) {
+            window.close();
+        }
+        switch (windowState) {
             case WindowState::START:
                 displayTitleText(window, gameState, titleText, winnerSide);
                 window.draw(replayButton);
                 window.draw(buttonText);
-                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                    if (replayButton.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                if (leftMousePressed(event)) {
+                    if (rectContainsMouse(replayButton.getGlobalBounds(), event)) {
                         windowState = WindowState::GAME;
                         selectSound.play();
                         music.play();
@@ -211,17 +214,17 @@ int main() {
                 }
                 window.draw(replayButton);
                 window.draw(buttonText);
-                if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
-                    if (replayButton.getGlobalBounds().contains(event.mouseButton.x, event.mouseButton.y)) {
+                if (leftMousePressed(event)) {
+                    if (rectContainsMouse(replayButton.getGlobalBounds(), event)) {
                         resetGame(board, move, winnerSide, gameState, windowState, moveSound, font);
                         selectSound.play();
                         music.play();
                         winSoundPlayed = false;
                     }
                 }
-            }
-            window.display();
+                break;
         }
+        window.display();
     }
 
 }
