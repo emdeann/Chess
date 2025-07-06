@@ -4,6 +4,7 @@
 #include "board/Board.h"
 #include "moves/MoveExecutor.h"
 #include "moves/MoveValidator.h"
+#include "../ui/SoundManager.h"
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <set>
@@ -23,7 +24,7 @@ public:
         selected = NONE_SELECTED;
     }
 
-    GameState selectTile(int pos, int moveNum) {
+    GameState selectTile(int pos, int moveNum, SoundManager& sounds) {
         int turn = moveNum % 2;
         PieceSide activeSide = turn == 0 ? PieceSide::WHITE : PieceSide::BLACK;
         executor.setCurrentMoveNumber(moveNum);
@@ -39,6 +40,7 @@ public:
             }
         } else {
             if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
+                sounds.playMoveSound();
                 turnState = executor.executeMove(board, selected, pos);
             }
             

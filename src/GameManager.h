@@ -75,11 +75,12 @@ public:
         }
         else if (inBoardRange(mousePos.x, yAdj)) {
             int boardPos = (mousePos.x / CELL_WIDTH) + (yAdj / CELL_WIDTH) * BOARD_WIDTH;
-            GameState curState = board.selectTile(boardPos, move);
+            GameState curState = board.selectTile(boardPos, move, soundManager);
             if (curState != GameState::NO_TURN) {
                 move += 1;
                 gameState = curState;
                 if (gameState == GameState::CHECKMATE) {
+                    soundManager.playWinSound();
                     winnerSide = (move - 1) % 2 == 0 ? PieceSide::WHITE : PieceSide::BLACK;
                 }
             }

@@ -31,9 +31,8 @@ public:
 	}
 
 	void playWinSound() {
-		if (!winSoundPlayed) {
-			winSound.play();
-		}
+		gameMusic.stop();
+		winSound.play();
 		winSoundPlayed = true;
 	}
 };
