@@ -4,6 +4,7 @@
 #include "../constants/Constants.h"
 #include "../constants/Enums.h"
 #include <vector>
+#include <set>
 
 using namespace std;
 
@@ -16,7 +17,7 @@ private:
     vector<vector<ChessPiece>> captures;
 
 public:
-    Board(int h, int w, sf::Sound& sound) {
+    Board(int h, int w) {
         height = h;
         width = w;
         enPassantMove = NONE_SELECTED;
@@ -24,10 +25,10 @@ public:
         captures = vector<vector<ChessPiece>>(2);
         cells = vector<Cell>(h * w);
         
-        initializePieces(sound);
+        initializePieces();
     }
 
-    void initializePieces(sf::Sound& sound) {
+    void initializePieces() {
         vector<ChessPiece> standardBackRow = ChessPieceFactory::createStandardBackRow();
         
         for (int j = 0; j < 2; j++) {
@@ -35,8 +36,6 @@ public:
             for (int i = 0; i < width; i++) {
                 ChessPiece& backPiece = backRow.at(i);
                 ChessPiece pawn = ChessPieceFactory::createPiece(PieceType::PAWN);
-                backPiece.setSound(&sound);  
-                pawn.setSound(&sound);
                 if (j) {
                     backPiece.switchSide();
                     pawn.switchSide();
@@ -56,6 +55,45 @@ public:
         }
     }
 
+    void highlightValidMoves(const set<int>& moves, PieceSide side = PieceSide::NONE) {
+        for (int i : moves) {
+            sf::Color color = (!cells.at(i).getChessPiece().isActive() ||
+                cells.at(i).getChessPiece().getSide() == side) ?
+                sf::Color::Green : sf::Color::Red;
+            cells.at(i).toggleHighlight(color);
+        }
+    }
+
+    void toggleCellSelected(int pos) {
+        cells.at(pos).toggleSelected();
+    }
+
+    void draw(sf::RenderTarget& target, sf::RenderStates states) const {
+        int mid = BOARD_DIM_IN_WINDOW / 2;
+        int piecesInRow = 7;
+        float capSize = DEFAULT_ITEM_SIZE * 0.7;
+        int betweenCaptures = Y_OFFSET / 4;
+
+        for (int i = 0; i < cells.size(); i++) {
+            target.draw(cells.at(i));
+        }
+
+        // Draw captured pieces above/below board
+        const vector<vector<ChessPiece>>& captures = getCaptures();
+        for (int i = 0; i < captures.size(); i++) {
+            vector<ChessPiece> cur = captures.at(i);
+            for (int j = 0; j < cur.size(); j++) {
+                ChessPiece piece = cur.at(j);
+                sf::Sprite pieceSprite(piece.getTexture());
+                pieceSprite.setOrigin({ static_cast<float>(pieceSprite.getTexture().getSize().x) / 2, static_cast<float>(pieceSprite.getTexture().getSize().y) / 2 });
+                pieceSprite.setScale({ capSize, capSize });
+                pieceSprite.setPosition({ mid + static_cast<float>(CELL_WIDTH) / 4 + betweenCaptures * (j % piecesInRow), betweenCaptures + (BOARD_DIM_IN_WINDOW + Y_OFFSET) * i + betweenCaptures * (static_cast<float>(j) / piecesInRow) });
+                target.draw(pieceSprite);
+            }
+        }
+    }
+
+    const Cell& getCell(int pos) const { return cells.at(pos); }
     Cell& getCell(int pos) { return cells.at(pos); }
     const vector<Cell>& getCells() const { return cells; }
     int getHeight() const { return height; }

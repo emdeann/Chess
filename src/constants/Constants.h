@@ -1,4 +1,5 @@
 #pragma once
+#include <string>
 
 const int BOARD_HEIGHT = 8;
 const int BOARD_WIDTH = 8;
@@ -19,6 +20,6 @@ const float DEFAULT_ITEM_SIZE = 0.375;
 const int MAX_RANGE = 8;
 
 const std::string ASSET_PATH = "assets/";
-const std::string TEXTURE_PATH = ASSET_PATH + "/textures/";
-const std::string AUDIO_PATH = ASSET_PATH + "/sounds/";
-const std::string FONT_PATH = ASSET_PATH + "/fonts/";
+const std::string TEXTURE_PATH = ASSET_PATH + "textures/";
+const std::string AUDIO_PATH = ASSET_PATH + "sounds/";
+const std::string FONT_PATH = ASSET_PATH + "fonts/";

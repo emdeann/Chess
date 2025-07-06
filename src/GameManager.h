@@ -1,81 +1,88 @@
 #pragma once
 
+#include "ui/UIManager.h"
+#include "ui/SoundManager.h"
+#include "board/BoardManager.h"
 #include "constants/Constants.h"
-#include "board/Board.h"
-#include "moves/MoveExecutor.h"
-#include "moves/MoveValidator.h"
-#include "board/BoardRenderer.h"
-#include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
-#include <set>
 
-class GameManager : public sf::Drawable {
+class GameManager {
 private:
-    Board state;
-    MoveValidator validator;
-    BoardRenderer renderer;
-    MoveExecutor executor;
-    int selected;
-    set<int> currentValidMoves;
+    int move = 0;
+    PieceSide winnerSide = PieceSide::NONE;
 
+    bool holderPiecesSet = false, winSoundPlayed = false;
+    GameState gameState = GameState::NONE;
+
+    BoardManager board;
+    UIManager uiManager;
+    SoundManager soundManager;
+
+    bool inBoardRange(int x, int y) {
+        return x >= 0 && x < BOARD_DIM_IN_WINDOW && y >= 0 && y < BOARD_DIM_IN_WINDOW;
+    }
 public:
-    GameManager(int h, int w, sf::Sound& sound, sf::Font& textFont) 
-        : state(h, w, sound), 
-          validator(&state), 
-          renderer(&state, textFont), 
-          executor(&state, &validator, sound) {
-        selected = NONE_SELECTED;
+    GameManager(): board(BOARD_WIDTH, BOARD_HEIGHT) {}
+
+    UIManager& getUI() {
+        return uiManager;
     }
 
-    // Called when a tile is clicked on in the GUI
-    GameState selectTile(int pos, int moveNum) {
-        int turn = moveNum % 2;
-        PieceSide activeSide = turn == 0 ? PieceSide::WHITE : PieceSide::BLACK;
-        executor.setCurrentMoveNumber(moveNum);
-        GameState turnState = GameState::NO_TURN;
-        
-        if (selected == NONE_SELECTED) {
-            // Try to select a piece
-            ChessPiece& curPiece = state.getCell(pos).getChessPiece();
-            if (curPiece.isActive() && curPiece.getSide() == activeSide) {
-                selected = pos;
-                currentValidMoves = validator.getPossibleMoves(selected, curPiece, true, curPiece);
-                renderer.highlightValidMoves(currentValidMoves, curPiece.getSide());
-                renderer.toggleCellSelected(selected);
-            }
-        } else {
-            // Attempt to move the selected piece
-            if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
-                turnState = executor.executeMove(selected, pos);
-                
-                // Update score display
-                const vector<int>& scores = state.getScores();
-                renderer.updateScoreText(turn, scores.at(turn));
-            }
-            
-            // Deselect the piece regardless of move validity
-            renderer.toggleCellSelected(selected);
-            selected = NONE_SELECTED;
-            renderer.highlightValidMoves(currentValidMoves); // This will toggle off the highlights
-            currentValidMoves.clear();
+    SoundManager& getSound() {
+        return soundManager;
+    }
+
+    BoardManager& getBoard() {
+        return board;
+    }
+
+    template<typename... Ts>
+    void handleEvents(Ts &&... handlers) {
+        uiManager.getWindow().handleEvents(handlers...);
+    }
+
+    void updateScreen() {
+        uiManager.update(board, gameState, winnerSide);
+    }
+
+    void tryStartGame(const sf::Event::MouseButtonPressed& clickEvent) {
+        if (uiManager.startClicked(clickEvent)) {
+            soundManager.playStartSounds();
         }
-        
-        return turnState;
     }
 
-    void draw(sf::RenderTarget& target, sf::RenderStates states) const override {
-        renderer.draw(target, states);
+    void tryRestartGame(const sf::Event::MouseButtonPressed& clickEvent) {
+        if (uiManager.startClicked(clickEvent)) {
+            board = BoardManager(BOARD_WIDTH, BOARD_HEIGHT);
+            uiManager = UIManager();
+            soundManager = SoundManager();
+            soundManager.playStartSounds();
+        }
     }
-    
-    bool isDoPromotion() const {
-        return executor.isDoPromotion();
-    }
-    
-    PieceSide getPromotionSide() {
-        return executor.getPromotionSide();
-    }
-    
-    void setPromotedPiece(Cell& cell) {
-        executor.setPromotedPiece(cell);
+
+    void runTurn(const sf::Event::MouseButtonPressed& event) {
+        bool promote = board.isDoPromotion();
+        if (promote && !holderPiecesSet) {
+            uiManager.setPlaceHolderPieces(board.getPromotionSide());
+            holderPiecesSet = true;
+        }
+
+        sf::Vector2i mousePos = event.position;
+        int yAdj = mousePos.y - Y_OFFSET;
+        int  promotionSelection =  uiManager.getPromotionSelection(event);
+        if (promotionSelection != NONE_SELECTED) {
+            board.setPromotedPiece(uiManager.getPromotionCells().at(promotionSelection));
+            holderPiecesSet = false;
+        }
+        else if (inBoardRange(mousePos.x, yAdj)) {
+            int boardPos = (mousePos.x / CELL_WIDTH) + (yAdj / CELL_WIDTH) * BOARD_WIDTH;
+            GameState curState = board.selectTile(boardPos, move);
+            if (curState != GameState::NO_TURN) {
+                move += 1;
+                gameState = curState;
+                if (gameState == GameState::CHECKMATE) {
+                    winnerSide = (move - 1) % 2 == 0 ? PieceSide::WHITE : PieceSide::BLACK;
+                }
+            }
+        }
     }
 };

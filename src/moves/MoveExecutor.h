@@ -8,14 +8,13 @@ class MoveExecutor {
 private:
     Board* state;
     MoveValidator* moveValidator;
-    sf::Sound* moveSound;
     bool doPromotion;
     int promotionPos;
     int curMoveNum;
 
 public:
-    MoveExecutor(Board* state, MoveValidator* validator, sf::Sound& sound) 
-        : state(state), moveValidator(validator), moveSound(&sound) {
+    MoveExecutor(Board* state, MoveValidator* validator) 
+        : state(state), moveValidator(validator) {
         doPromotion = false;
         promotionPos = NONE_SELECTED;
         curMoveNum = 0;
@@ -25,7 +24,7 @@ public:
         curMoveNum = moveNum;
     }
 
-    GameState executeMove(int from, int to) {
+    GameState executeMove(Board& board, int from, int to) {
         ChessPiece oldPiece = state->getCell(to).getChessPiece();
         ChessPiece& selectedPiece = state->getCell(from).getChessPiece();
         
@@ -62,17 +61,16 @@ public:
         }
         
         // Check game state (check, checkmate, etc)
-        GameState turnState = moveValidator->check(state->getCell(to).getChessPiece().getSide(), true, oldPiece);
+        GameState turnState = moveValidator->check(board, state->getCell(to).getChessPiece().getSide(), true, oldPiece);
         
         // Check if pawn promotion is needed
-        doPromotion = moveValidator->shouldPromote(selectedPiece, to);
+        doPromotion = moveValidator->shouldPromote(board, selectedPiece, to);
         promotionPos = (doPromotion) ? to : NONE_SELECTED;
         
         return turnState;
     }
     
     void setPromotedPiece(Cell& cell) {
-        cell.getChessPiece().setSound(moveSound);
         cell.movePiece(state->getCell(promotionPos));
         doPromotion = false;
         promotionPos = NONE_SELECTED;

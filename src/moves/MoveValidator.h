@@ -6,34 +6,33 @@
 
 class MoveValidator {
 private:
-    Board* state;
     set<int> castleMoves;
 
     // Helper methods
-    bool moveNotWrapped(int origPos, int newPos) {
-        int width = state->getWidth();
+    bool moveNotWrapped(const Board& board, int origPos, int newPos) {
+        int width = board.getWidth();
         return abs(newPos % width - origPos % width) < width / 2;
     }
 
     // Get bounds for diagonals (either direction) for use when finding available moves
-    int getDiagonalMin(int pos, bool left) {
-        int width = state->getWidth();
-        int height = state->getHeight();
+    int getDiagonalMin(const Board& board, int pos, bool left) {
+        int width = board.getWidth();
+        int height = board.getHeight();
         int loc = pos;
         int prevLoc = loc;
-        while (loc >= 0 && moveNotWrapped(loc, prevLoc)) {
+        while (loc >= 0 && moveNotWrapped(board, loc, prevLoc)) {
             prevLoc = loc;
             loc -= width + left - !left;
         }
         return loc;
     }
 
-    int getDiagonalMax(int pos, bool left) {
-        int width = state->getWidth();
-        int height = state->getHeight();
+    int getDiagonalMax(const Board& board, int pos, bool left) {
+        int width = board.getWidth();
+        int height = board.getHeight();
         int loc = pos;
         int prevLoc = loc;
-        while (loc < width * height && moveNotWrapped(loc, prevLoc)) {
+        while (loc < width * height && moveNotWrapped(board, loc, prevLoc)) {
             prevLoc = loc;
             loc += width + left - !left;
         }
@@ -45,8 +44,8 @@ private:
     }
 
     // New helper method to convert MovePattern to step value
-    int getMovePatternStep(MoveDirection pattern) const {
-        int width = state->getWidth();
+    int getMovePatternStep(const Board& board, MoveDirection pattern) const {
+        int width = board.getWidth();
         switch (pattern) {
             case MoveDirection::HORIZONTAL: return 1;
             case MoveDirection::VERTICAL: return width;
@@ -56,10 +55,9 @@ private:
         }
     }
 
-    // New helper to get move pattern bounds
-    pair<int, int> getMovePatternBounds(int pos, MoveDirection pattern) {
-        int width = state->getWidth();
-        int height = state->getHeight();
+    pair<int, int> getMovePatternBounds(const Board& board, int pos, MoveDirection pattern) {
+        int width = board.getWidth();
+        int height = board.getHeight();
         int min, max;
         switch (pattern) {
             case MoveDirection::HORIZONTAL:
@@ -71,36 +69,36 @@ private:
                 max = width * (height + 1) - (width - pos % width);
                 break;
             case MoveDirection::DIAGONAL_LEFT:
-                min = getDiagonalMin(pos, true);
-                max = getDiagonalMax(pos, true);
+                min = getDiagonalMin(board, pos, true);
+                max = getDiagonalMax(board, pos, true);
                 break;
             case MoveDirection::DIAGONAL_RIGHT:
-                min = getDiagonalMin(pos, false);
-                max = getDiagonalMax(pos, false);
+                min = getDiagonalMin(board, pos, false);
+                max = getDiagonalMax(board, pos, false);
                 break;
         }
         return {min, max};
     }
 
-    bool clearPathToRook(int pos, int step, int dist, PieceSide side) {
+    bool clearPathToRook(const Board& board, int pos, int step, int dist, PieceSide side) {
         bool clearPath = true;
         for (int i = pos + step; abs(pos - i) < dist && clearPath; i += step) {
-            clearPath = !state->getCell(i).getChessPiece().isActive();
+            clearPath = !board.getCell(i).getChessPiece().isActive();
         }
         int end = pos + dist * step;
-        ChessPiece& endPiece = state->getCell(end).getChessPiece();
+        const ChessPiece& endPiece = board.getCell(end).getChessPiece();
         return clearPath && endPiece.isOnSide(side) && endPiece.getName() == "rook";
     }
 
-    GameState checkForCheck(PieceSide sideFor, bool checkAll, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+    GameState checkForCheck(const Board& board, PieceSide sideFor, bool checkAll, const ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
         set<int> allMovesFor;
         GameState gameState = GameState::NONE;
         int opposingKingPos = (subPiece.isOfType(PieceType::KING) && subPieceAt != NONE_SELECTED) * subPieceAt;
         
-        for (int i = 0; i < state->size(); i++) {
-            ChessPiece& cur = state->getCell(i).getChessPiece();
+        for (int i = 0; i < board.size(); i++) {
+            const ChessPiece& cur = board.getCell(i).getChessPiece();
             if (cur.isOnSide(sideFor) && i != subPieceAt) {
-                set<int> curMoves = getPossibleMoves(i, cur, false, subPiece, subPieceAt, removePieceFrom);
+                set<int> curMoves = getPossibleMoves(board, i, cur, false, subPiece, subPieceAt, removePieceFrom);
                 allMovesFor.insert(curMoves.begin(), curMoves.end());
             }
             else if (!(subPiece.isOfType(PieceType::KING) && subPieceAt != NONE_SELECTED) && cur.isOfType(PieceType::KING)) {
@@ -114,9 +112,9 @@ private:
         
         if (checkAll) {
             bool noOpponentMoves = true;
-            for (int i = 0; i < state->size() && noOpponentMoves; i++) {
-                ChessPiece& cur = state->getCell(i).getChessPiece();
-                noOpponentMoves = !cur.isOnSide(getOpposingSide(sideFor)) || getPossibleMoves(i, cur, true, subPiece, subPieceAt, removePieceFrom).empty();
+            for (int i = 0; i < board.size() && noOpponentMoves; i++) {
+                const ChessPiece& cur = board.getCell(i).getChessPiece();
+                noOpponentMoves = !cur.isOnSide(getOpposingSide(sideFor)) || getPossibleMoves(board, i, cur, true, subPiece, subPieceAt, removePieceFrom).empty();
             }
             gameState = (noOpponentMoves) ? ((gameState == GameState::CHECK) ? GameState::CHECKMATE : GameState::STALEMATE) : gameState;
         }
@@ -125,21 +123,21 @@ private:
     }
 
 public:
-    MoveValidator(Board* state) : state(state) {
+    MoveValidator() {
         castleMoves = { NONE_SELECTED, NONE_SELECTED };
     }
 
     // Check if a move would result in check
-    bool moveResultsInCheck(ChessPiece& movingPiece, int moveTo, int moveFrom) {
-        GameState moveState = checkForCheck(getOpposingSide(movingPiece.getSide()), false, movingPiece, moveTo, moveFrom);
+    bool moveResultsInCheck(const Board& board, const ChessPiece& movingPiece, int moveTo, int moveFrom) {
+        GameState moveState = checkForCheck(board, getOpposingSide(movingPiece.getSide()), false, movingPiece, moveTo, moveFrom);
         return moveState == GameState::CHECK || moveState == GameState::CHECKMATE;
     }
 
     // Get all valid moves for a piece
-    set<int> getPossibleMoves(int pos, ChessPiece& piece, bool verifyLegal, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+    set<int> getPossibleMoves(const Board& board, int pos, const ChessPiece& piece, bool verifyLegal, const ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
         set<int> allMoves;
         if (piece.useStrictMotion()) {
-            allMoves = getStrictMoves(pos, piece, verifyLegal, subPiece, subPieceAt, removePieceFrom);
+            allMoves = getStrictMoves(board, pos, piece, verifyLegal, subPiece, subPieceAt, removePieceFrom);
         }
         else {
             vector<bool> permissions = piece.getValidDirections();
@@ -149,13 +147,13 @@ public:
             vector<MoveDirection> possibleMoves = { MoveDirection::HORIZONTAL, MoveDirection::VERTICAL, MoveDirection::DIAGONAL_LEFT, MoveDirection::DIAGONAL_RIGHT };
             for (int i = 0; i < permissions.size(); i++) {
                 if (permissions.at(i)) {
-                    set<int> cur = getMoves(pos, piece.getRange(), piece.getSide(), possibleMoves.at(i), verifyLegal, subPiece, subPieceAt, removePieceFrom);
+                    set<int> cur = getMoves(board, pos, piece.getRange(), piece.getSide(), possibleMoves.at(i), verifyLegal, subPiece, subPieceAt, removePieceFrom);
                     allMoves.insert(cur.begin(), cur.end());
                 }
             }
         }
         if (piece.isOfType(PieceType::KING) && verifyLegal) {
-            setCastleMoves(pos);
+            setCastleMoves(board, pos);
             for (int i : castleMoves) {
                 if (i != NONE_SELECTED) {
                     allMoves.insert(i);
@@ -166,9 +164,9 @@ public:
     }
 
     // Get moves for pieces with standard movement patterns
-    set<int> getMoves(int pos, int range, PieceSide side, MoveDirection pattern, bool verifyLegal, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
-        pair<int, int> bounds = getMovePatternBounds(pos, pattern);
-        int step = getMovePatternStep(pattern);
+    set<int> getMoves(const Board& board, int pos, int range, PieceSide side, MoveDirection pattern, bool verifyLegal, const ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+        pair<int, int> bounds = getMovePatternBounds(board, pos, pattern);
+        int step = getMovePatternStep(board, pattern);
         
         set<int> validMoves;
         int bound1 = pos, bound2 = pos;
@@ -176,21 +174,21 @@ public:
         int prevLoc = pos;
 
         while (bound1 > bounds.first && (abs(bound1 - pos) <= rangeMax)
-            && (!((bound1 == subPieceAt) ? subPiece : state->getCell(bound1).getChessPiece()).isOnSide(side) || bound1 == removePieceFrom || bound1 == pos)
-            && (!((prevLoc == subPieceAt) ? subPiece : state->getCell(prevLoc).getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
+            && (!((bound1 == subPieceAt) ? subPiece : board.getCell(bound1).getChessPiece()).isOnSide(side) || bound1 == removePieceFrom || bound1 == pos)
+            && (!((prevLoc == subPieceAt) ? subPiece : board.getCell(prevLoc).getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
             prevLoc = bound1;
             bound1 -= step;
         }
 
         prevLoc = pos;
         while (bound2 < bounds.second && (abs(bound2 - pos) <= rangeMax)
-            && (!((bound2 == subPieceAt) ? subPiece : state->getCell(bound2).getChessPiece()).isOnSide(side) || bound2 == removePieceFrom || bound2 == pos)
-            && (!((prevLoc == subPieceAt) ? subPiece : state->getCell(prevLoc).getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
+            && (!((bound2 == subPieceAt) ? subPiece : board.getCell(bound2).getChessPiece()).isOnSide(side) || bound2 == removePieceFrom || bound2 == pos)
+            && (!((prevLoc == subPieceAt) ? subPiece : board.getCell(prevLoc).getChessPiece()).isActive() || prevLoc == removePieceFrom || prevLoc == pos)) {
             prevLoc = bound2;
             bound2 += step;
         }
         for (int i = bound1 + step; i < bound2; i += step) {
-            if (i != pos && !(verifyLegal && moveResultsInCheck(state->getCell(pos).getChessPiece(), i, pos))) {
+            if (i != pos && !(verifyLegal && moveResultsInCheck(board, board.getCell(pos).getChessPiece(), i, pos))) {
                 validMoves.insert(i);
             }
         }
@@ -198,9 +196,9 @@ public:
     }
 
     // Get moves for pieces with special movement patterns (knights, pawns)
-    set<int> getStrictMoves(int pos, ChessPiece& piece, bool verifyLegal, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
-        int width = state->getWidth();
-        int height = state->getHeight();
+    set<int> getStrictMoves(const Board& board, int pos, const ChessPiece& piece, bool verifyLegal, const ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+        int width = board.getWidth();
+        int height = board.getHeight();
         set<int> moves;
         bool pieceInRange, continueChecking = true;
         vector<int> moveList = piece.getStrictMoves();
@@ -208,10 +206,10 @@ public:
         for (int i = 0; i < moveList.size() && continueChecking; i++) {
             int newPos = pos + moveList.at(i);
             pieceInRange = newPos >= 0 && newPos < height * width;
-            ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : state->getCell(newPos).getChessPiece();
+            const ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : board.getCell(newPos).getChessPiece();
             if (pieceInRange && (newPos == removePieceFrom || !posPiece.isActive() 
                 || (posPiece.getSide() != piece.getSide() && piece.canTakeStrictly()))
-                && moveNotWrapped(pos, newPos) && !(verifyLegal && moveResultsInCheck(piece, newPos, pos))) {
+                && moveNotWrapped(board, pos, newPos) && !(verifyLegal && moveResultsInCheck(board, piece, newPos, pos))) {
                 moves.insert(newPos);
             }
             else {
@@ -224,33 +222,22 @@ public:
             for (int i : takeMoves) {
                 int newPos = pos + i;
                 pieceInRange = newPos >= 0 && newPos < height * width;
-                ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : state->getCell(newPos).getChessPiece();
+                const ChessPiece& posPiece = (newPos == subPieceAt || !pieceInRange) ? subPiece : board.getCell(newPos).getChessPiece();
                 if (newPos >= 0 && newPos < height * width && posPiece.isActive()
-                    && posPiece.getSide() != piece.getSide() && moveNotWrapped(pos, newPos) && (newPos != removePieceFrom) 
-                    && !(verifyLegal && moveResultsInCheck(piece, newPos, pos))) {
+                    && posPiece.getSide() != piece.getSide() && moveNotWrapped(board, pos, newPos) && (newPos != removePieceFrom)
+                    && !(verifyLegal && moveResultsInCheck(board, piece, newPos, pos))) {
                     moves.insert(newPos);
                 }
             }
         }
         
-        // En passant logic
-        if (piece.isOfType(PieceType::PAWN)) {
-            vector<int> neighbors = getNeighbors(pos);
-            for (int i : neighbors) {
-                ChessPiece& neighbor = state->getCell(i).getChessPiece();
-                if (neighbor.getSide() != piece.getSide() && neighbor.canBeEnPassanted(0)) { // curMoveNum needs to be handled externally
-                    int idx = i - width + 2 * width * (neighbor.getSide() == PieceSide::BLACK);
-                    moves.insert(idx);
-                    state->setEnPassantMove(idx);
-                }
-            }
-        }
+        // TODO: Re-add en-passant in a different location
         
         return moves;
     }
 
-    vector<int> getNeighbors(int pos) {
-        int width = state->getWidth();
+    vector<int> getNeighbors(const Board& board, int pos) {
+        int width = board.getWidth();
         vector<int> neighbors;
         for (int i = 0; i < 2; i++) {
             int adj = pos - 1 + 2 * i;
@@ -261,14 +248,14 @@ public:
         return neighbors;
     }
 
-    void setCastleMoves(int kingPos) {
-        ChessPiece& king = state->getCell(kingPos).getChessPiece();
+    void setCastleMoves(const Board& board, int kingPos) {
+        const ChessPiece& king = board.getCell(kingPos).getChessPiece();
         vector<int> distances{ 3, 4 };
         bool canCastle = king.canCastle();
-        bool inCheck = checkForCheck(getOpposingSide(king.getSide()), false, king) == GameState::CHECK;
+        bool inCheck = checkForCheck(board, getOpposingSide(king.getSide()), false, king) == GameState::CHECK;
         castleMoves.erase(castleMoves.begin(), castleMoves.end());
         for (int i = 0; i < distances.size(); i++) {
-            if (canCastle && !inCheck && clearPathToRook(kingPos, -2 * i + 1, distances.at(i), king.getSide())) {	
+            if (canCastle && !inCheck && clearPathToRook(board, kingPos, -2 * i + 1, distances.at(i), king.getSide())) {	
                 castleMoves.insert(kingPos + 2 - 4*i);
             }
             else {
@@ -279,12 +266,12 @@ public:
 
     set<int> getCastleMoves() const { return castleMoves; }
 
-    GameState check(PieceSide sideFor, bool checkAll, ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
-        return checkForCheck(sideFor, checkAll, subPiece, subPieceAt, removePieceFrom);
+    GameState check(const Board& board, PieceSide sideFor, bool checkAll, const ChessPiece& subPiece, int subPieceAt = NONE_SELECTED, int removePieceFrom = NONE_SELECTED) {
+        return checkForCheck(board, sideFor, checkAll, subPiece, subPieceAt, removePieceFrom);
     }
 
-    bool shouldPromote(ChessPiece& piece, int pos) {
-        int height = state->getHeight();
+    bool shouldPromote(const Board& board, const ChessPiece& piece, int pos) {
+        int height = board.getHeight();
         // Verify that the piece is a pawn and is at the correct location for its side
         return piece.isOfType(PieceType::PAWN) && ((piece.getSide() == PieceSide::WHITE && (pos / height) == height - 1) ||
             (piece.getSide() == PieceSide::BLACK && !(pos / height)));

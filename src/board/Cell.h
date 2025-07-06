@@ -34,6 +34,10 @@ public:
 		piece = p;
 	}
 
+	const ChessPiece& getChessPiece() const {
+		return piece;
+	}
+	
 	ChessPiece& getChessPiece() {
 		return piece;
 	}
