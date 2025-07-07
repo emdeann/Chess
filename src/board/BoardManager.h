@@ -18,9 +18,7 @@ private:
     set<int> currentValidMoves;
 
 public:
-    BoardManager(int h, int w)
-        : board(h, w), 
-          executor(&board, &validator) {
+    BoardManager(int h, int w) : board(h, w) {
         selected = NONE_SELECTED;
     }
 
@@ -41,7 +39,7 @@ public:
         } else {
             if (selected != pos && currentValidMoves.find(pos) != currentValidMoves.end()) {
                 sounds.playMoveSound();
-                turnState = executor.executeMove(board, selected, pos);
+                turnState = executor.executeMove(board, validator, selected, pos);
             }
             
             board.toggleCellSelected(selected);
@@ -62,11 +60,11 @@ public:
     }
     
     PieceSide getPromotionSide() {
-        return executor.getPromotionSide();
+        return executor.getPromotionSide(board);
     }
     
     void setPromotedPiece(Cell& cell) {
-        executor.setPromotedPiece(cell);
+        executor.setPromotedPiece(board, cell);
     }
 
     const vector<int>& getScores() const {

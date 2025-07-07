@@ -21,6 +21,10 @@ public:
 		winSoundPlayed = false;
 	}
 
+	void reset() {
+		winSoundPlayed = false;
+	}
+
 	void playStartSounds() {
 		selectSound.play();
 		gameMusic.play();

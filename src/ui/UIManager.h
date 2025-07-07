@@ -31,9 +31,8 @@ private:
     vector<Cell> promotionCells;
     vector<ChessPiece> standardPromotionPieces;
 
-    void textSetup(sf::Text& txt, string s, sf::RenderWindow& window) {
+    void textSetup(sf::Text& txt, sf::RenderWindow& window) {
         txt.setCharacterSize(TITLE_CHARSIZE);
-        txt.setString(s);
         sf::FloatRect textRect = txt.getLocalBounds();
         txt.setOrigin({ textRect.position.x + textRect.size.x / 2.0f,
                     textRect.position.y + textRect.size.y / 2.0f });
@@ -67,7 +66,8 @@ private:
             text = "Stalemate :(";
             break;
         }
-        textSetup(titleText, text, window);
+        titleText.setString(text);
+        textSetup(titleText, window);
         window.draw(titleText);
     }
 
@@ -75,25 +75,21 @@ private:
         return rect.contains(static_cast<sf::Vector2f>(event.position));
     }
 
-public:
-	UIManager() : window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), "Chess", sf::Style::Titlebar | sf::Style::Close), titleText(textFont), buttonText(textFont), promotionCells(4) {
-		windowState = WindowState::START;
-		textFont.openFromFile(FONT_PATH + "zig.ttf");
-		window.setVerticalSyncEnabled(true);
-		buttonText.setCharacterSize(BUTTON_CHARSIZE);
-		buttonText.setString("Start Game");
-		setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, BUTTON_SIZE),
-			sf::Vector2f(window.getSize().x / 8.f, window.getSize().y / 2.f), sf::Color::Black, BUTTON_OUTLINE_WIDTH, buttonText);
-
+    void init() {
+        windowState = WindowState::START;
+        buttonText.setString("Start Game");
+        setupButton(replayButton, sf::Vector2f(window.getSize().x * 0.75f, BUTTON_SIZE),
+            sf::Vector2f(window.getSize().x / 8.f, window.getSize().y / 2.f), sf::Color::Black, BUTTON_OUTLINE_WIDTH, buttonText);
         standardPromotionPieces = ChessPieceFactory::createStandardPromotionPieces();
-
         setPlaceHolderPieces();
+
         for (int i = 0; i < promotionCells.size(); i++) {
             Cell& cur = promotionCells.at(i);
             cur.setSize(sf::Vector2f(CELL_WIDTH, CELL_WIDTH));
             cur.setDefaultColor(sf::Color::Cyan);
         }
-
+        
+        scoreText.clear();
         for (int i = 0; i < 2; i++) {
             sf::Text t(textFont);
             t.setCharacterSize(24);
@@ -104,7 +100,24 @@ public:
             t.setPosition(sf::Vector2f(BOARD_DIM_IN_WINDOW / 4.f, Y_OFFSET / 2.f + (BOARD_DIM_IN_WINDOW + Y_OFFSET) * i));
             scoreText.push_back(t);
         }
+    }
+
+public:
+	UIManager() : window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), "Chess", sf::Style::Titlebar | sf::Style::Close), titleText(textFont), buttonText(textFont), promotionCells(4) {
+        textFont.openFromFile(FONT_PATH + "zig.ttf");
+        window.setVerticalSyncEnabled(true);
+        buttonText.setCharacterSize(BUTTON_CHARSIZE);
+        
+        textSetup(titleText, window);
+        init();
 	}
+
+    void reset(bool start = true) {
+        init();
+        if (start) {
+            windowState = WindowState::GAME;
+        }
+    }
 
     void setPlaceHolderPieces(PieceSide promoSide = PieceSide::NONE) {
         vector<ChessPiece> promotionPieces = standardPromotionPieces;
@@ -152,7 +165,7 @@ public:
         return windowState;
     }
 
-	void update(const BoardManager& board, const GameState& gameState, const PieceSide& winnerSide = PieceSide::NONE) {
+	void draw(const BoardManager& board, const GameState& gameState, const PieceSide& winnerSide = PieceSide::NONE) {
         switch (windowState) {
         case WindowState::START:
             displayTitleText(gameState);

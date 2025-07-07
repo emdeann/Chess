@@ -7,11 +7,11 @@
 
 class GameManager {
 private:
-    int move = 0;
-    PieceSide winnerSide = PieceSide::NONE;
+    int move;
+    PieceSide winnerSide;
 
-    bool holderPiecesSet = false, winSoundPlayed = false;
-    GameState gameState = GameState::NONE;
+    bool holderPiecesSet, winSoundPlayed;
+    GameState gameState;
 
     BoardManager board;
     UIManager uiManager;
@@ -20,8 +20,26 @@ private:
     bool inBoardRange(int x, int y) {
         return x >= 0 && x < BOARD_DIM_IN_WINDOW && y >= 0 && y < BOARD_DIM_IN_WINDOW;
     }
+
+    void init() {
+        move = 0;
+        winnerSide = PieceSide::NONE;
+        gameState = GameState::NONE;
+        holderPiecesSet = false;
+        winSoundPlayed = false;
+    }
+
+    void reset() {
+        board = BoardManager(BOARD_WIDTH, BOARD_HEIGHT);
+        uiManager.reset();
+        soundManager.reset();
+        init();
+    }
+
 public:
-    GameManager(): board(BOARD_WIDTH, BOARD_HEIGHT) {}
+    GameManager() : board(BOARD_WIDTH, BOARD_HEIGHT) {
+        init();
+    }
 
     UIManager& getUI() {
         return uiManager;
@@ -41,7 +59,7 @@ public:
     }
 
     void updateScreen() {
-        uiManager.update(board, gameState, winnerSide);
+        uiManager.draw(board, gameState, winnerSide);
     }
 
     void tryStartGame(const sf::Event::MouseButtonPressed& clickEvent) {
@@ -52,9 +70,7 @@ public:
 
     void tryRestartGame(const sf::Event::MouseButtonPressed& clickEvent) {
         if (uiManager.startClicked(clickEvent)) {
-            board = BoardManager(BOARD_WIDTH, BOARD_HEIGHT);
-            uiManager = UIManager();
-            soundManager = SoundManager();
+            reset();
             soundManager.playStartSounds();
         }
     }
