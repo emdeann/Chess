@@ -68,4 +68,8 @@ public:
     void setPromotedPiece(Cell& cell) {
         executor.setPromotedPiece(cell);
     }
+
+    const vector<int>& getScores() const {
+        return board.getScores();
+    }
 };

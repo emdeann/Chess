@@ -140,8 +140,8 @@ public:
         window.close();
     }
 
-    void updateScoreText(int side, int score) {
-        scoreText.at(side).setString(std::format("Score: {}", score));
+    void updateScoreText(PieceSide side, int score) {
+        scoreText.at(side == PieceSide::WHITE ? 0 : 1).setString(std::format("Score: {}", score));
     }
 
     sf::RenderWindow& getWindow() {
@@ -165,6 +165,9 @@ public:
             case GameState::NONE:
                 window.clear((gameState == GameState::CHECK) ? sf::Color::Red : sf::Color::Black);
                 window.draw(board);
+                for (sf::Text& score : scoreText) {
+                    window.draw(score);
+                }
                 if (board.isDoPromotion()) {
                     for (Cell& c : promotionCells) {
                         window.draw(c);
@@ -182,10 +185,6 @@ public:
             displayTitleText(gameState, winnerSide);
             window.draw(replayButton);
             window.draw(buttonText);
-        }
-
-        for (sf::Text& score : scoreText) {
-            window.draw(score);
         }
 
         window.display();
