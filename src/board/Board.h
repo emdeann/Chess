@@ -87,7 +87,7 @@ public:
                 sf::Sprite pieceSprite(piece.getTexture());
                 pieceSprite.setOrigin({ static_cast<float>(pieceSprite.getTexture().getSize().x) / 2, static_cast<float>(pieceSprite.getTexture().getSize().y) / 2 });
                 pieceSprite.setScale({ capSize, capSize });
-                pieceSprite.setPosition({ mid + static_cast<float>(CELL_WIDTH) / 4 + betweenCaptures * (j % piecesInRow), betweenCaptures + (BOARD_DIM_IN_WINDOW + Y_OFFSET) * i + betweenCaptures * (static_cast<float>(j) / piecesInRow) });
+                pieceSprite.setPosition({ mid + static_cast<float>(CELL_WIDTH) / 4 + betweenCaptures * (j % piecesInRow), static_cast<float>(betweenCaptures + (BOARD_DIM_IN_WINDOW + Y_OFFSET) * i + betweenCaptures * (j / piecesInRow)) });
                 target.draw(pieceSprite);
             }
         }
